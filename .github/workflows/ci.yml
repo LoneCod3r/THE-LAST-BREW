@@ -1,0 +1,48 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+# Read-only: this workflow only checks the code; it never deploys or writes to the repository.
+permissions:
+  contents: read
+
+# A newer push to the same branch or pull request supersedes a run still in progress.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-and-build:
+    name: test-and-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+
+    steps:
+      - name: Check out the repository
+        uses: actions/checkout@v7
+        with:
+          persist-credentials: false
+
+      # Node 24 LTS satisfies Vite 8 (^20.19 || >=22.12) and Vitest 5 (^22.12 || ^24 || >=26).
+      - name: Set up Node.js
+        uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Unit tests
+        run: npm test
+
+      - name: Type check
+        run: npm run typecheck
+
+      - name: Production build
+        run: npm run build
