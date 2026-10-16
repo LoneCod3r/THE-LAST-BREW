@@ -1,0 +1,16 @@
+/* ══ APPARATUS SCREEN ═════════════════════════════════════════════════════ */
+/* Only the machine; its one control is mounted on the casing. */
+.apparatus {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* The machine's screen still flickers into ACCESS GRANTED. */
+@keyframes granted-in {
+  0% { opacity: 0; letter-spacing: 0.5em; }
+  6% { opacity: 1; }
+  10% { opacity: 0.15; }
+  18% { opacity: 1; }
+  22% { opacity: 0.5; }
+  35%, 100% { opacity: 1; letter-spacing: 0.16em; }
+}

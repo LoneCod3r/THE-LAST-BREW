@@ -1,0 +1,1260 @@
+/* ══ DISPENSER (beverage and sugar selection) ═════════════════════════════ */
+/* Only the machine: centred in the full screen. */
+.dispenser {
+  display: grid;
+  grid-template-rows: minmax(0, 1fr);
+}
+
+/* Sugar crystals may drift past the machine's sides but never widen the page. */
+.dispenser__grid {
+  display: grid;
+  min-height: 0;
+  overflow-x: clip;
+}
+
+/* ══ PHOTO FRAME ══════════════════════════════════════════════════════════ */
+/*
+ * The slot is a size container. The frame takes the largest width whose
+ * photo (fixed 487:608) and padding still fit the slot's height, so the
+ * machine never distorts and never pushes the page past the viewport.
+ */
+.machine-slot {
+  container-type: size;
+  display: grid;
+  justify-items: center;
+  align-items: center;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+}
+
+.vm-frame {
+  --fpad: clamp(5px, 1vmin, 12px);
+  position: relative;
+  width: min(100cqw, 640px, calc((100cqh - 2 * var(--fpad) - 2px) * 487 / 608 + 2 * var(--fpad) + 2px));
+  margin: 0;
+  padding: var(--fpad);
+  border: 1px solid rgba(180, 154, 108, 0.35);
+  background: #141513;
+  box-shadow:
+    0 30px 60px -30px #000,
+    inset 0 0 0 1px rgba(0, 0, 0, 0.6);
+}
+
+.vm {
+  position: relative;
+  container-type: inline-size;
+  aspect-ratio: 487 / 608;
+  overflow: hidden;
+  isolation: isolate;
+  background: #000;
+}
+
+.vm__photo {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  filter: saturate(0.8) contrast(1.05) brightness(0.9) sepia(0.1);
+  user-select: none;
+}
+
+.vm::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background:
+    radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.45) 100%),
+    repeating-linear-gradient(180deg, transparent 0 2px, rgba(0, 0, 0, 0.12) 3px, transparent 4px);
+}
+
+.vm.is-working {
+  animation: vm-hum 120ms steps(2) infinite;
+}
+
+@keyframes vm-hum {
+  50% {
+    transform: translate(0.4px, 0.2px);
+  }
+}
+
+/* ── Dispensing effects, drawn in photo pixels ─────────────────────────── */
+.vm__fx {
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
+.vm__glow {
+  opacity: 0;
+  mix-blend-mode: screen;
+  transition: opacity 900ms linear;
+}
+
+.is-powered .vm__glow {
+  opacity: 0.6;
+}
+
+.vm__stream {
+  opacity: 0;
+  transform: scaleY(0);
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+  transition:
+    transform 380ms cubic-bezier(0.55, 0, 1, 0.6),
+    opacity 200ms linear;
+}
+
+.is-pouring .vm__stream {
+  opacity: 1;
+  transform: scaleY(1);
+}
+
+.is-steaming .vm__stream {
+  transform-origin: 50% 100%;
+  transition:
+    transform 500ms ease-in,
+    opacity 300ms 300ms linear;
+}
+
+.is-pouring .vm__flow {
+  animation: vm-flow 380ms linear infinite;
+}
+
+@keyframes vm-flow {
+  to {
+    stroke-dashoffset: -11;
+  }
+}
+
+.vm__fill {
+  opacity: 0;
+  transform: scale(0.25);
+  transform-box: fill-box;
+  transform-origin: 50% 50%;
+}
+
+.is-filling .vm__fill {
+  opacity: 1;
+  transform: scale(1);
+  transition:
+    transform var(--pour-ms) cubic-bezier(0.35, 0.1, 0.5, 1) 250ms,
+    opacity 600ms 250ms linear;
+}
+
+.vm__wisp {
+  opacity: 0;
+}
+
+.is-steaming .vm__wisp {
+  animation: vm-steam 3.4s ease-in-out infinite;
+}
+
+@keyframes vm-steam {
+  0% {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+  30% {
+    opacity: 0.5;
+  }
+  100% {
+    opacity: 0;
+    transform: translateY(-26px);
+  }
+}
+
+/* ══ THE CUP ══════════════════════════════════════════════════════════════ */
+/* Its own layer over the empty tray; it carries its pour, steam and shadow. */
+.vm__cup {
+  position: absolute;
+  z-index: 4;
+  pointer-events: none;
+}
+
+.vm__cup-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+.vm__cup-art {
+  position: absolute;
+  display: block;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 18%;
+  background: none;
+  cursor: default;
+}
+
+.vm__cup-art img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  user-select: none;
+  transition: filter 240ms ease-out;
+}
+
+/* Only the arrived cup is interactive (the layer is inert at every other stage). */
+.vm__cup:not([inert]) .vm__cup-art {
+  pointer-events: auto;
+  cursor: pointer;
+}
+
+.vm__cup:not([inert]) .vm__cup-art:hover img {
+  filter: brightness(1.08) drop-shadow(0 0 3px rgba(180, 154, 108, 0.35));
+}
+
+/* Thin, because the layer is scaled up around it. */
+.vm__cup-art:focus-visible {
+  outline: 1px solid rgba(216, 192, 143, 0.85);
+  outline-offset: 2px;
+}
+
+/* A shadow that only exists once the cup is off the tray. */
+.vm__cast {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: 50% 0;
+}
+
+.vm__contact {
+  opacity: 0.85;
+  transition: opacity 900ms ease-out;
+}
+
+/* ── The handoff: the cup leaves the tray and comes toward the viewer ───── */
+.vm.is-handoff {
+  overflow: visible;
+}
+
+.vm__cup {
+  transition: transform 2600ms cubic-bezier(0.45, 0.05, 0.2, 1);
+}
+
+.vm__cup.is-handed {
+  transform: translate(var(--hx), var(--hy)) scale(var(--hs));
+}
+
+.is-handoff .vm__contact {
+  opacity: 0;
+}
+
+/* Picked up: a little closer, a little higher, and gone. */
+.vm__cup.is-handed.is-picked {
+  opacity: 0;
+  transform: translate(var(--hx), calc(var(--hy) - 7vh)) scale(calc(var(--hs) * 1.14));
+  transition:
+    transform 950ms cubic-bezier(0.3, 0, 0.2, 1),
+    opacity 800ms ease-in 150ms;
+}
+
+.vm__cup.is-handed .vm__cast {
+  opacity: 0.7;
+  transform: translateY(2px) scale(1.15, 1.25);
+  transition:
+    opacity 2200ms ease-out 300ms,
+    transform 2600ms cubic-bezier(0.45, 0.05, 0.2, 1);
+}
+
+/* The machine recedes into the dark while the cup comes forward. */
+.vm__photo,
+.vm__screen,
+.vm__fx {
+  transition:
+    filter 2200ms ease-out,
+    opacity 2200ms ease-out;
+}
+
+.vm.is-handoff .vm__photo {
+  filter: saturate(0.7) contrast(1.05) brightness(0.5) sepia(0.15);
+}
+
+/* Darken, never fade: the screen overlay must stay opaque over the photo's own display. */
+.vm.is-handoff .vm__screen {
+  filter: brightness(0.5);
+}
+
+.vm.is-handoff .vm__fx {
+  opacity: 0.45;
+}
+
+/* With the cup taken, the display wakes up again for its message; the casing stays dim. */
+.vm.is-handoff.is-served .vm__screen {
+  filter: none;
+  transition: filter 900ms ease-out;
+}
+
+/* ── MORE COFFEE: a wide metal key, set into the band under the screen ──── */
+.more-key {
+  display: grid;
+  place-items: center;
+  min-width: 44px;
+  min-height: 44px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* On the machine: the box is the touch target (at least 44px); the cap is the key you see. */
+.more-key--casing {
+  position: absolute;
+  z-index: 5;
+  width: max(100px, 39cqw);
+  height: max(44px, 7.4cqw);
+  transform: translate(-50%, -50%);
+  opacity: 0;
+  visibility: hidden;
+  transition:
+    opacity 600ms ease-out,
+    visibility 0s linear 600ms;
+}
+
+.more-key--casing.is-shown {
+  opacity: 1;
+  visibility: visible;
+  transition: opacity 600ms ease-out;
+}
+
+.more-key__cap {
+  --depth: max(2px, 0.55cqw);
+  display: grid;
+  place-items: center;
+  width: max(92px, 35.3cqw);
+  height: max(18px, 4.6cqw);
+  padding-left: 0.22em;
+  border-radius: max(3px, 0.8cqw);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.13), rgba(255, 255, 255, 0) 42%),
+    repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px),
+    linear-gradient(180deg, #3c3d3a 0%, #2a2b28 48%, #1c1d1b 100%);
+  box-shadow:
+    0 0 0 max(1px, 0.2cqw) rgba(180, 154, 108, 0.7),
+    inset 0 max(1px, 0.22cqw) 0 rgba(255, 255, 255, 0.16),
+    inset 0 calc(-1 * max(1px, 0.3cqw)) 0 rgba(0, 0, 0, 0.55),
+    0 var(--depth) 0 #0a0a09,
+    0 calc(var(--depth) + max(1px, 0.2cqw)) 0 rgba(180, 154, 108, 0.28),
+    0 calc(var(--depth) * 1.6) max(4px, 1.1cqw) rgba(0, 0, 0, 0.75);
+  font-family: var(--mono);
+  font-size: max(7.5px, 1.75cqw);
+  font-weight: 600;
+  line-height: 1;
+  letter-spacing: 0.22em;
+  white-space: nowrap;
+  color: #d8c08f;
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.85);
+  transition:
+    transform 70ms ease-out,
+    box-shadow 70ms ease-out,
+    filter 160ms ease-out;
+}
+
+.more-key:hover .more-key__cap {
+  filter: brightness(1.14);
+}
+
+/* Pressed: the cap travels down onto its skirt; the brass edge stays. */
+.more-key:active .more-key__cap,
+.more-key.is-down .more-key__cap {
+  transform: translateY(var(--depth));
+  box-shadow:
+    0 0 0 max(1px, 0.2cqw) rgba(180, 154, 108, 0.7),
+    inset 0 max(1px, 0.22cqw) 0 rgba(255, 255, 255, 0.08),
+    inset 0 calc(-1 * max(1px, 0.3cqw)) 0 rgba(0, 0, 0, 0.55),
+    0 0 0 #0a0a09,
+    0 max(1px, 0.2cqw) 0 rgba(180, 154, 108, 0.28),
+    0 1px max(2px, 0.5cqw) rgba(0, 0, 0, 0.75);
+  filter: brightness(0.92);
+}
+
+.more-key:focus-visible {
+  outline: none;
+}
+
+.more-key:focus-visible .more-key__cap {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+
+/* ── Small parts on the casing (Easter eggs and the Secret Blend seal) ─── */
+.casing {
+  display: contents;
+}
+
+.casing__badge,
+.casing__bean,
+.casing__seal {
+  position: absolute;
+  z-index: 3;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.casing__badge:focus-visible,
+.casing__bean:focus-visible,
+.casing__seal:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+}
+
+/* The maker's badge: a small brass plate on the drip tray, engraved with a cup. */
+.casing__badge {
+  width: max(32px, 12cqw);
+  height: max(26px, 5cqw);
+  cursor: default;
+}
+
+.casing__badge-plate {
+  display: block;
+  width: 8.2cqw;
+  height: 2.9cqw;
+  border-radius: 999px;
+  background: linear-gradient(180deg, #c8b07e, #8d764c 55%, #6c5937);
+  box-shadow:
+    inset 0 0 0 max(0.5px, 0.18cqw) rgba(40, 30, 14, 0.55),
+    0 max(0.5px, 0.15cqw) max(1px, 0.3cqw) rgba(0, 0, 0, 0.8);
+  color: #3a2c14;
+  opacity: 0.82;
+  transition: filter 160ms ease-out;
+}
+
+.casing__badge-plate svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.casing__badge:active .casing__badge-plate {
+  filter: brightness(1.25);
+}
+
+/* The stray bean: tiny, with a far larger hit area than it looks. */
+.casing__bean {
+  width: max(36px, 8cqw);
+  height: max(36px, 8cqw);
+  cursor: default;
+}
+
+.casing__bean-art {
+  width: 2.3cqw;
+  min-width: 7px;
+  height: auto;
+  transform: rotate(-14deg);
+  filter: drop-shadow(0 0.15cqw 0.2cqw rgba(0, 0, 0, 0.6));
+}
+
+/* The Secret Blend seal: three brass dots in a ring, left on the band under the screen. */
+.casing__seal {
+  width: max(44px, 9cqw);
+  height: max(44px, 9cqw);
+}
+
+.casing__seal-disc {
+  position: relative;
+  display: block;
+  width: max(16px, 4.2cqw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #4a3a1e, #1c160b 75%);
+  box-shadow:
+    0 0 0 max(1px, 0.25cqw) var(--brass),
+    0 0 max(4px, 1.4cqw) rgba(180, 154, 108, 0.35);
+}
+
+.casing__seal-disc i {
+  position: absolute;
+  width: 22%;
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: var(--brass);
+}
+
+.casing__seal-disc i:nth-child(1) { left: 39%; top: 18%; }
+.casing__seal-disc i:nth-child(2) { left: 20%; top: 54%; }
+.casing__seal-disc i:nth-child(3) { left: 58%; top: 54%; }
+
+.casing__seal:hover .casing__seal-disc {
+  filter: brightness(1.2);
+}
+
+/* ── The machine's reactions ───────────────────────────────────────────── */
+/* Curious Barista: the display hiccups once, as if startled. */
+.vm.is-notice-curiousBarista .vm__screen {
+  animation: barista-hiccup 650ms steps(5, end);
+}
+
+@keyframes barista-hiccup {
+  20% { filter: brightness(1.6); transform: translateX(0.4px); }
+  40% { filter: brightness(0.6); }
+  60% { filter: brightness(1.3); transform: translateX(-0.4px); }
+}
+
+/* Secret Blend: a brass light rises through the machine, the display flares, then settles. */
+.vm.is-unveiling .vm__photo {
+  filter: saturate(0.85) contrast(1.05) brightness(0.8) sepia(0.35);
+  transition: filter 2400ms ease-in-out;
+}
+
+.vm.is-unveiling::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  pointer-events: none;
+  background: radial-gradient(ellipse at 50% 60%, rgba(214, 178, 110, 0.4), transparent 62%);
+  mix-blend-mode: screen;
+  animation: unveil-glow 3200ms ease-in-out both;
+}
+
+@keyframes unveil-glow {
+  0% { opacity: 0; transform: scale(0.6); }
+  45% { opacity: 1; }
+  70% { opacity: 0.7; }
+  100% { opacity: 1; transform: scale(1.1); }
+}
+
+/* ══ TOUCHSCREEN UI (sized in container units of the photo) ═══════════════ */
+.vm__screen {
+  position: absolute;
+  z-index: 3;
+  overflow: hidden;
+}
+
+.vmui {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 40%, #142219, #070c09 78%);
+  box-shadow:
+    inset 0 0 3cqw rgba(0, 0, 0, 0.85),
+    inset 0 0 0 0.3cqw #050806;
+  font-family: var(--mono);
+  font-size: max(2.2cqw, 7px);
+  letter-spacing: 0.08em;
+  color: var(--green);
+}
+
+.vmui::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background:
+    linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 38%),
+    repeating-linear-gradient(180deg, transparent 0 0.35cqw, rgba(0, 0, 0, 0.28) 0.45cqw, transparent 0.55cqw);
+}
+
+.vmui__btn,
+.vmui__start {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5cqw;
+  padding: 0.5cqw;
+  border: 1px solid rgba(139, 175, 145, 0.45);
+  border-radius: 0.4cqw;
+  background: rgba(139, 175, 145, 0.05);
+  font-family: var(--mono);
+  font-size: max(2.1cqw, 8px);
+  font-weight: 600;
+  line-height: 1.12;
+  letter-spacing: 0.08em;
+  text-align: center;
+  color: var(--green);
+  transition:
+    background-color 120ms linear,
+    color 120ms linear,
+    box-shadow 120ms linear;
+}
+
+.vmui__btn:hover:not(:disabled),
+.vmui__start:hover:not(:disabled) {
+  background: rgba(139, 175, 145, 0.15);
+  box-shadow: 0 0 1.4cqw rgba(139, 175, 145, 0.3);
+}
+
+.vmui__btn:focus-visible,
+.vmui__start:focus-visible {
+  outline: 2px solid var(--ivory);
+  outline-offset: -4px;
+}
+
+.vmui__btn:disabled,
+.vmui__start:disabled {
+  cursor: default;
+}
+
+.vmui__btn.is-selected,
+.vmui__btn.is-selected:hover:not(:disabled) {
+  border-color: var(--green);
+  background: var(--green);
+  color: #07100b;
+  box-shadow: 0 0 2cqw rgba(139, 175, 145, 0.55);
+}
+
+.vmui__glyph {
+  flex: none;
+  width: 4.2cqw;
+  height: 4.2cqw;
+}
+
+/* Small machines: drop the button glyphs and tighten tracking so labels keep their size. */
+@container (max-width: 300px) {
+  .vmui__glyph {
+    display: none;
+  }
+  .vmui__btn {
+    letter-spacing: 0.02em;
+  }
+  .vmui__big {
+    letter-spacing: 0.05em;
+  }
+  .vmui__sub {
+    letter-spacing: 0.12em;
+  }
+}
+
+/* A solved case: a small brass seal in the button's corner. */
+.vmui__seal {
+  position: absolute;
+  top: 7%;
+  right: 6%;
+  width: max(1.3cqw, 5px);
+  height: max(1.3cqw, 5px);
+  border-radius: 50%;
+  background: var(--brass);
+  box-shadow: 0 0 0 max(0.3cqw, 1px) rgba(180, 154, 108, 0.25);
+}
+
+.vmui__btn.is-selected .vmui__seal {
+  background: #3d2f12;
+}
+
+.vmui__start {
+  border-color: var(--brass);
+  background: rgba(180, 154, 108, 0.08);
+  font-size: max(2.5cqw, 9px);
+  letter-spacing: 0.3em;
+  padding-left: calc(0.5cqw + 0.3em);
+  color: var(--brass);
+}
+
+.vmui__start:hover:not(:disabled) {
+  background: rgba(180, 154, 108, 0.2);
+  box-shadow: 0 0 1.4cqw rgba(180, 154, 108, 0.35);
+}
+
+/* Two identical keyframes so consecutive presses always retrigger. */
+.is-contact-0 {
+  animation: vm-contact-a 380ms ease-out;
+}
+
+.is-contact-1 {
+  animation: vm-contact-b 380ms ease-out;
+}
+
+@keyframes vm-contact-a {
+  40% {
+    transform: scale(0.94);
+    filter: brightness(1.5);
+  }
+}
+
+@keyframes vm-contact-b {
+  40% {
+    transform: scale(0.94);
+    filter: brightness(1.5);
+  }
+}
+
+/* Sugar: − and + keys either side of five sugar-cube pips. */
+.vmui__sugar {
+  position: absolute;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1px solid rgba(139, 175, 145, 0.45);
+  border-radius: 0.4cqw;
+  background: linear-gradient(rgba(139, 175, 145, 0.1), rgba(139, 175, 145, 0.02));
+  box-shadow: inset 0 -0.3cqw 0 rgba(0, 0, 0, 0.45);
+  font-family: var(--mono);
+  font-size: max(3.4cqw, 12px);
+  font-weight: 500;
+  line-height: 1;
+  color: var(--green);
+  transition:
+    background-color 120ms linear,
+    box-shadow 120ms linear,
+    opacity 120ms linear;
+}
+
+.vmui__sugar:hover:not(:disabled) {
+  background: rgba(139, 175, 145, 0.16);
+  box-shadow:
+    inset 0 -0.3cqw 0 rgba(0, 0, 0, 0.45),
+    0 0 1.4cqw rgba(139, 175, 145, 0.3);
+}
+
+.vmui__sugar:focus-visible {
+  outline: 2px solid var(--ivory);
+  outline-offset: -4px;
+}
+
+.vmui__sugar:disabled {
+  cursor: default;
+  opacity: 0.32;
+}
+
+.vmui__level {
+  position: absolute;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.9cqw;
+}
+
+.vmui__level i {
+  width: max(2.1cqw, 5px);
+  height: max(2.1cqw, 5px);
+  border: 1px solid rgba(139, 175, 145, 0.45);
+  border-radius: 1px;
+  transition:
+    background-color 220ms linear,
+    box-shadow 220ms linear;
+}
+
+.vmui__level i.is-on {
+  border-color: rgba(233, 228, 212, 0.9);
+  background: #e9e4d4;
+  box-shadow: 0 0 1.2cqw rgba(139, 175, 145, 0.75);
+}
+
+/* START with nothing selected: the coffee keys pulse once, in warning red. */
+.vmui__choices.is-alert-0 .vmui__btn {
+  animation: vm-alert-a 640ms ease-out;
+}
+
+.vmui__choices.is-alert-1 .vmui__btn {
+  animation: vm-alert-b 640ms ease-out;
+}
+
+@keyframes vm-alert-a {
+  30% {
+    border-color: var(--crimson-text);
+    box-shadow: 0 0 1.6cqw rgba(188, 103, 103, 0.55);
+  }
+}
+
+@keyframes vm-alert-b {
+  30% {
+    border-color: var(--crimson-text);
+    box-shadow: 0 0 1.6cqw rgba(188, 103, 103, 0.55);
+  }
+}
+
+/* A very brief analog flicker whenever the sugar level changes. */
+.vmui.is-flicker-0 {
+  animation: vm-flicker-a 260ms steps(4, end);
+}
+
+.vmui.is-flicker-1 {
+  animation: vm-flicker-b 260ms steps(4, end);
+}
+
+@keyframes vm-flicker-a {
+  25% { filter: brightness(1.45) contrast(1.1); transform: translateX(0.3px); }
+  50% { filter: brightness(0.72); }
+  75% { filter: brightness(1.18); transform: translateX(-0.3px); }
+}
+
+@keyframes vm-flicker-b {
+  25% { filter: brightness(1.45) contrast(1.1); transform: translateX(0.3px); }
+  50% { filter: brightness(0.72); }
+  75% { filter: brightness(1.18); transform: translateX(-0.3px); }
+}
+
+/* Maximum sugar: a symbol surfaces through the phosphor, distorts, and is gone. */
+.sugar-sigil {
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  display: grid;
+  place-items: center;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  opacity: 0;
+  animation: sigil-surface 1500ms linear both;
+}
+
+.sugar-sigil__mark {
+  width: auto;
+  height: 78%;
+  aspect-ratio: 1;
+  color: #b9e2bd;
+  filter: drop-shadow(0 0 1.4cqw rgba(139, 175, 145, 0.8));
+}
+
+@keyframes sigil-surface {
+  0% { opacity: 0; transform: none; clip-path: inset(0); }
+  8% { opacity: 0.55; transform: skewX(-8deg) translateX(-1.5%); }
+  12% { opacity: 0.1; }
+  20% { opacity: 0.7; transform: skewX(4deg) translateX(1%); }
+  26% { opacity: 0.25; clip-path: inset(30% 0 40% 0); }
+  34% { opacity: 0.72; transform: none; clip-path: inset(0); }
+  70% { opacity: 0.6; }
+  78% { opacity: 0.15; transform: skewX(6deg); }
+  84% { opacity: 0.45; transform: none; }
+  100% { opacity: 0; }
+}
+
+/* ══ SUGAR CRYSTALS (around the machine) ═══════════════════════════════════ */
+.sugar-fx {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  container-type: size;
+  pointer-events: none;
+}
+
+.sugar-fx__p {
+  position: absolute;
+  width: var(--s);
+  height: var(--s);
+  margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
+  background: currentColor;
+  box-shadow: 0 0 calc(var(--s) * 1.8) currentColor;
+  opacity: 0;
+  animation-fill-mode: both;
+}
+
+.sugar-fx__p.is-green { color: #a9d6ae; }
+.sugar-fx__p.is-ivory { color: #efe7cf; }
+.sugar-fx__p.is-brass { color: #d8bd85; }
+
+/* + : crystals condense out of the air, catch the light, rise and dissolve. */
+.sugar-fx__p--up {
+  animation-name: crystal-rise;
+  animation-timing-function: cubic-bezier(0.2, 0.6, 0.3, 1);
+}
+
+@keyframes crystal-rise {
+  0% {
+    opacity: 0;
+    transform: translate(0, 0) rotate(45deg) scale(0.3);
+  }
+  18% {
+    opacity: var(--peak);
+    transform: translate(calc(var(--dx) * 0.2), calc(var(--dy) * 0.15)) rotate(70deg) scale(1);
+  }
+  55% {
+    opacity: calc(var(--peak) * 0.8);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(160deg) scale(0.15);
+  }
+}
+
+/* − : crystals reverse, fall inward and collapse into fine dust. */
+.sugar-fx__p--down {
+  animation-name: crystal-collapse;
+  animation-timing-function: cubic-bezier(0.55, 0, 0.8, 0.4);
+}
+
+@keyframes crystal-collapse {
+  0% {
+    opacity: 0;
+    transform: rotate(45deg) scale(1.1);
+  }
+  15% {
+    opacity: var(--peak);
+  }
+  100% {
+    opacity: 0;
+    transform: translate(var(--dx), var(--dy)) rotate(-90deg) scale(0.1);
+  }
+}
+
+/* Dispensing: the chosen sugar drops into the cup before the coffee, then dissolves. */
+.vm__cube {
+  opacity: 0;
+  transform-box: fill-box;
+  transform-origin: center;
+}
+
+.is-sugared .vm__cube {
+  animation: cube-drop 1100ms cubic-bezier(0.5, 0, 0.9, 0.6) both;
+}
+
+@keyframes cube-drop {
+  0% { opacity: 0; transform: translateY(-36px) rotate(-20deg); }
+  12% { opacity: 1; }
+  55% { opacity: 1; transform: translateY(0) rotate(8deg); }
+  70% { opacity: 1; transform: translateY(0) rotate(8deg) scale(1); }
+  100% { opacity: 0; transform: translateY(1px) rotate(8deg) scale(0.5); }
+}
+
+.vmui__pips {
+  display: inline-flex;
+  gap: 0.6cqw;
+  margin-left: 1.6cqw;
+  vertical-align: middle;
+}
+
+.vmui__pips i {
+  width: max(1.4cqw, 4px);
+  height: max(1.4cqw, 4px);
+  border: 1px solid rgba(180, 154, 108, 0.6);
+}
+
+.vmui__pips i.is-on {
+  background: var(--brass);
+}
+
+/* After the coffee: the machine's message, the ritual, or the Secret Blend. */
+.vmui__live,
+.vmui-notice-region {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+.vmui__msg {
+  position: absolute;
+  inset: 7% 6%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: max(3px, 1.1cqw);
+  margin: 0;
+  text-align: center;
+  animation: msg-in 900ms ease-out both;
+}
+
+.vmui__msg-title {
+  margin: 0;
+  padding-left: 0.16em;
+  font-size: max(3.6cqw, 9px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  text-shadow: 0 0 2cqw rgba(139, 175, 145, 0.6);
+}
+
+.vmui__msg-body {
+  max-width: 92%;
+  margin: 0;
+  font-size: max(2.05cqw, 7px);
+  line-height: 1.38;
+  letter-spacing: 0.02em;
+  color: #c4d8c6;
+  text-wrap: balance;
+}
+
+.vmui__msg--ritual .vmui__msg-title {
+  padding-left: 0;
+  letter-spacing: 0.06em;
+}
+
+.vmui__badge {
+  margin: 0;
+  padding: 0.5cqw 1.4cqw 0.5cqw calc(1.4cqw + 0.24em);
+  border: 1px solid var(--brass);
+  font-size: max(1.7cqw, 7px);
+  font-weight: 600;
+  letter-spacing: 0.24em;
+  color: var(--brass);
+  box-shadow: inset 0 0 1.2cqw rgba(180, 154, 108, 0.18);
+}
+
+.vmui__msg--secret .vmui__msg-title {
+  color: #e2c88f;
+  text-shadow: 0 0 2.4cqw rgba(214, 178, 110, 0.7);
+  animation: granted-in 1600ms linear both;
+}
+
+.vmui__msg--secret .vmui__msg-body {
+  color: var(--brass);
+}
+
+@keyframes msg-in {
+  from { opacity: 0; }
+}
+
+/* An Easter egg's message: over the display for a few seconds, never in the way of a click. */
+.vmui-notice-region {
+  z-index: 3;
+}
+
+.vmui-notice {
+  position: absolute;
+  inset: 0;
+  z-index: 3;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: max(3px, 1cqw);
+  padding: 6%;
+  background: radial-gradient(ellipse at 50% 45%, rgba(16, 28, 20, 0.97), rgba(5, 9, 6, 0.98) 80%);
+  text-align: center;
+  pointer-events: none;
+  animation: notice-life 5200ms linear both;
+}
+
+.vmui-notice__title {
+  margin: 0;
+  padding-left: 0.3em;
+  font-size: max(2.4cqw, 8px);
+  font-weight: 600;
+  letter-spacing: 0.3em;
+  color: var(--brass);
+}
+
+.vmui-notice__body {
+  max-width: 90%;
+  margin: 0;
+  font-size: max(2.5cqw, 8px);
+  line-height: 1.4;
+  letter-spacing: 0.04em;
+  text-wrap: balance;
+  text-shadow: 0 0 1.6cqw rgba(139, 175, 145, 0.5);
+}
+
+@keyframes notice-life {
+  0% { opacity: 0; }
+  6% { opacity: 1; }
+  9% { opacity: 0.4; }
+  12%, 88% { opacity: 1; }
+  100% { opacity: 0; }
+}
+
+/* Dispensing display */
+.vmui__big {
+  position: absolute;
+  top: 20%;
+  right: 4%;
+  left: 4%;
+  margin: 0;
+  font-size: max(4.2cqw, 9px);
+  font-weight: 600;
+  letter-spacing: 0.16em;
+  white-space: nowrap;
+  text-align: center;
+  text-shadow: 0 0 2cqw rgba(139, 175, 145, 0.6);
+  animation: status-in 420ms steps(6);
+}
+
+.vmui--dispense.is-granted .vmui__big {
+  animation: granted-in 1300ms linear both;
+}
+
+.vmui__sub {
+  position: absolute;
+  top: 46%;
+  right: 4%;
+  left: 4%;
+  margin: 0;
+  font-size: max(1.9cqw, 7px);
+  letter-spacing: 0.3em;
+  text-align: center;
+  color: var(--brass);
+}
+
+.vmui__progress {
+  position: absolute;
+  top: 68%;
+  right: 12%;
+  left: 12%;
+  height: 8%;
+  padding: 0.45cqw;
+  border: 1px solid rgba(139, 175, 145, 0.5);
+}
+
+.vmui__progress span {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: repeating-linear-gradient(90deg, var(--green) 0 1.2cqw, transparent 1.2cqw 1.6cqw);
+  transition: width 700ms steps(6);
+}
+
+.vm[data-phase='power'] .vmui__progress span { width: 14%; }
+.vm[data-phase='grind'] .vmui__progress span { width: 30%; }
+.vm[data-phase='pressure'] .vmui__progress span { width: 45%; }
+.vm[data-phase='pour'] .vmui__progress span {
+  width: 94%;
+  transition: width var(--pour-ms) linear;
+}
+.vm[data-phase='settle'] .vmui__progress span,
+.vm[data-phase='done'] .vmui__progress span { width: 100%; }
+
+/* ══ CARTOON HAND ═════════════════════════════════════════════════════════ */
+/* A page-level layer over the photo (see HandLayer), above the CRT overlay. */
+.hand-layer {
+  position: absolute;
+  z-index: 101;
+  overflow: hidden;
+  container-type: inline-size;
+  pointer-events: none;
+}
+
+.hand {
+  position: absolute;
+  width: 40%;
+  aspect-ratio: 463 / 1600;
+  pointer-events: none;
+  transition:
+    left 620ms cubic-bezier(0.33, 0, 0.2, 1),
+    top 620ms cubic-bezier(0.33, 0, 0.2, 1);
+}
+
+/* Pivot and scale around the fingertip, then pull it onto the anchor. */
+.hand__aim,
+.hand__press {
+  width: 100%;
+  height: 100%;
+  transform-origin: var(--tip-x) var(--tip-y);
+}
+
+.hand__aim {
+  transform: translate(calc(-1 * var(--tip-x)), calc(-1 * var(--tip-y))) rotate(var(--arm)) scale(var(--depth));
+  transition: transform 620ms cubic-bezier(0.33, 0, 0.2, 1);
+}
+
+/* Shadow cast on the machine. */
+.hand__press {
+  filter: drop-shadow(0.8cqw 1.2cqw 0.6cqw rgba(0, 0, 0, 0.35));
+}
+
+/* Arrive slightly nearer, push into the glass, ease back off it. */
+.hand__press.is-pressing {
+  animation: hand-press 460ms cubic-bezier(0.3, 0.7, 0.4, 1);
+}
+
+@keyframes hand-press {
+  0% {
+    transform: scale(1.05);
+    filter: drop-shadow(1.4cqw 2cqw 1cqw rgba(0, 0, 0, 0.3));
+  }
+  40%,
+  60% {
+    transform: scale(0.96);
+    filter: drop-shadow(0.25cqw 0.4cqw 0.3cqw rgba(0, 0, 0, 0.5));
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+/* Tap rings on the glass at the moment of contact. */
+.tap {
+  position: absolute;
+  width: 12cqw;
+  height: 12cqw;
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+
+.tap i {
+  position: absolute;
+  inset: 0;
+  border: max(1px, 0.28cqw) solid rgba(222, 226, 214, 0.8);
+  border-radius: 50%;
+  opacity: 0;
+  animation: tap-ring 700ms ease-out 150ms both;
+}
+
+.tap i:nth-child(2) {
+  animation-delay: 240ms;
+}
+
+.tap i:nth-child(3) {
+  animation-delay: 330ms;
+}
+
+@keyframes tap-ring {
+  from {
+    opacity: 0.9;
+    transform: scale(0.2);
+  }
+  to {
+    opacity: 0;
+    transform: scale(1);
+  }
+}
+
+.hand__art {
+  display: block;
+  width: 100%;
+  height: 100%;
+  overflow: visible;
+}
+
+/* Reduced motion: no journey, the cup simply appears in the foreground. */
+@media (prefers-reduced-motion: reduce) {
+  .vm.is-handoff .vm__cup.is-handed {
+    animation: cup-appear 450ms ease-out both !important;
+    animation-duration: 450ms !important;
+  }
+  /* Picking up with reduced motion: no movement, just a short fade. */
+  .vm.is-handoff .vm__cup.is-handed.is-picked {
+    transform: translate(var(--hx), var(--hy)) scale(var(--hs));
+    transition: opacity 350ms ease-out !important;
+    transition-duration: 350ms !important;
+  }
+}
+
+@keyframes cup-appear {
+  from {
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tap {
+    display: none;
+  }
+  .vm.is-working,
+  .is-pouring .vm__flow {
+    animation: none !important;
+  }
+  .is-steaming .vm__wisp {
+    animation: none !important;
+    opacity: 0.35;
+  }
+}
+
+/* Reduced motion: messages and reactions appear without flicker or glow sweeps. */
+@media (prefers-reduced-motion: reduce) {
+  .vmui-notice,
+  .vm.is-notice-curiousBarista .vm__screen,
+  .vm.is-unveiling::before,
+  .vmui__msg--secret .vmui__msg-title {
+    animation: none !important;
+  }
+  .vm.is-unveiling::before {
+    opacity: 1;
+  }
+}

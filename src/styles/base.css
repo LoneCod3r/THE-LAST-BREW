@@ -1,0 +1,374 @@
+/* ── Tokens ─────────────────────────────────────────────────────────────── */
+:root {
+  --bg: #0b0d0c;
+  --bg-raised: #101311;
+  --bg-sunk: #070908;
+  --ivory: #d6d0bc;
+  --ivory-dim: #a6a090;
+  --ivory-faint: #807d72;
+  --line: rgba(214, 208, 188, 0.13);
+  --line-strong: rgba(214, 208, 188, 0.3);
+  --green: #8baf91;
+  --green-soft: rgba(139, 175, 145, 0.14);
+  --green-glow: rgba(139, 175, 145, 0.45);
+  --brass: #b49a6c;
+  --brass-soft: rgba(180, 154, 108, 0.16);
+  --crimson: #873f3f;
+  --crimson-text: #bc6767;
+  --paper: #c9bea5;
+  --paper-shade: #b5a98e;
+  --ink: #1d1b16;
+  --ink-soft: #4a4436;
+
+  --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
+  /* Archival typewriter for the case files: crisp and readable. */
+  --type: 'Courier Prime', 'American Typewriter', 'Courier New', Courier, monospace;
+  --serif: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Garamond, 'Times New Roman', serif;
+
+  --gutter: clamp(16px, 4vw, 48px);
+
+  /* Type and spacing scale with viewport height so every screen fits it. */
+  --fs-micro: clamp(0.62rem, 0.52rem + 0.22vmin, 0.7rem);
+  --fs-ui: clamp(0.68rem, 0.56rem + 0.32vmin, 0.8rem);
+  --fs-body: clamp(0.82rem, 0.62rem + 0.55vmin, 1rem);
+  --fs-lead: clamp(1rem, 0.72rem + 0.9vmin, 1.4rem);
+  --fs-title: clamp(1.45rem, 0.75rem + 2.5vmin, 2.8rem);
+  --space: clamp(8px, 1.5vmin, 18px);
+  --space-lg: clamp(12px, 2.4vmin, 32px);
+  --stage-top: var(--space-lg);
+  --stage-bottom: var(--space-lg);
+  --ease-mech: cubic-bezier(0.2, 0.9, 0.3, 1);
+
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='180' height='180'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 .5 0 0 0 0 .5 0 0 0 0 .5 0 0 0 1 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  color-scheme: dark;
+}
+
+/* ── Reset & base ───────────────────────────────────────────────────────── */
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  min-height: var(--app-h, 100dvh);
+  background: var(--bg);
+  color: var(--ivory);
+  font-family: var(--mono);
+  font-size: 16px;
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  overflow-x: hidden;
+}
+
+::selection {
+  background: var(--green);
+  color: var(--bg);
+}
+
+h1,
+h2,
+h3,
+p,
+ol,
+ul,
+dl,
+dd,
+figure {
+  margin: 0;
+}
+
+ol,
+ul {
+  padding: 0;
+  list-style: none;
+}
+
+button,
+input {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+:focus-visible {
+  outline: 2px solid var(--green);
+  outline-offset: 3px;
+}
+
+[tabindex='-1']:focus {
+  outline: none;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+/* ── Cursor ─────────────────────────────────────────────────────────────── */
+.cursor {
+  display: inline-block;
+  width: 0.55em;
+  height: 1.05em;
+  margin-left: 0.12em;
+  vertical-align: -0.16em;
+  background: var(--green);
+  box-shadow: 0 0 8px var(--green-glow);
+  animation: blink 1.05s steps(1) infinite;
+}
+
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+/* ── Buttons: mechanical, not playful ───────────────────────────────────── */
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6em;
+  min-height: 44px;
+  padding: 0.7rem 1.15rem;
+  border: 1px solid var(--line-strong);
+  border-radius: 2px;
+  background: transparent;
+  font-family: var(--mono);
+  font-size: 0.76rem;
+  font-weight: 500;
+  letter-spacing: 0.16em;
+  text-transform: uppercase;
+  color: var(--ivory);
+  transition:
+    border-color 120ms linear,
+    background-color 120ms linear,
+    color 120ms linear,
+    transform 60ms linear;
+}
+
+.btn:hover {
+  border-color: var(--brass);
+  color: var(--brass);
+}
+
+.btn:active {
+  transform: translateY(1px);
+  box-shadow: inset 0 2px 0 rgba(0, 0, 0, 0.5);
+}
+
+.btn--primary {
+  border-color: var(--green);
+  color: var(--green);
+  background: var(--green-soft);
+  box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35);
+}
+
+.btn--primary:hover {
+  border-color: var(--green);
+  color: var(--bg);
+  background: var(--green);
+}
+
+.btn--ghost {
+  border-color: transparent;
+  padding-inline: 0.4rem;
+  color: var(--ivory-dim);
+}
+
+.btn--ghost:hover {
+  border-color: var(--line-strong);
+  color: var(--ivory);
+}
+
+.btn--quiet {
+  border-style: dashed;
+  color: var(--ivory-dim);
+}
+
+.btn--ink {
+  border-color: var(--ink);
+  color: var(--ink);
+  background: transparent;
+}
+
+.btn--ink:hover {
+  color: var(--paper);
+  background: var(--ink);
+  border-color: var(--ink);
+}
+
+.btn--ink:focus-visible {
+  outline-color: var(--ink);
+}
+
+/* ── Paper surface ──────────────────────────────────────────────────────── */
+.paper {
+  position: relative;
+  color: var(--ink);
+  background-color: var(--paper);
+  background-image:
+    radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.28), transparent 60%),
+    radial-gradient(ellipse at 100% 100%, rgba(90, 70, 40, 0.22), transparent 55%),
+    var(--grain);
+  background-blend-mode: normal, multiply, multiply;
+  box-shadow:
+    0 1px 0 rgba(255, 255, 255, 0.15) inset,
+    0 18px 40px -18px rgba(0, 0, 0, 0.9);
+}
+
+@keyframes status-in {
+  from {
+    opacity: 0;
+    clip-path: inset(0 100% 0 0);
+  }
+  to {
+    opacity: 1;
+    clip-path: inset(0 0 0 0);
+  }
+}
+
+/* ── Stage & screen transitions ─────────────────────────────────────────── */
+.stage {
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  /* --app-h is the visible viewport, so an open on-screen keyboard shrinks the stage. */
+  height: var(--app-h, 100dvh);
+  padding: var(--stage-top) var(--gutter) var(--stage-bottom);
+  animation: stage-in 700ms var(--ease-mech) both;
+}
+
+/* Every screen is exactly one viewport tall; its children share that height. */
+.stage > section {
+  flex: 1 1 auto;
+  width: 100%;
+  max-width: 1240px;
+  min-height: 0;
+  margin: 0 auto;
+}
+
+.stage--intro {
+  padding: var(--gutter);
+}
+
+/* Phones and short screens: a tighter bottom margin. */
+@media (max-width: 719px), (max-height: 640px) {
+  :root {
+    --stage-bottom: var(--space);
+  }
+}
+
+@keyframes stage-in {
+  0% {
+    opacity: 0;
+    filter: brightness(2.2) blur(2px);
+    /* Scale rather than slide: the stage is exactly one viewport tall, and a
+       downward shift would briefly add a scrollbar. */
+    transform: scale(0.992);
+  }
+  12% {
+    opacity: 0.5;
+  }
+  18% {
+    opacity: 0.15;
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+/* ── CRT overlay ────────────────────────────────────────────────────────── */
+.crt {
+  position: fixed;
+  inset: 0;
+  z-index: 100;
+  pointer-events: none;
+  overflow: hidden;
+}
+
+.crt__grain {
+  position: absolute;
+  inset: -100px;
+  background-image: var(--grain);
+  opacity: 0.075;
+  mix-blend-mode: screen;
+  animation: grain 900ms steps(5) infinite;
+}
+
+.crt__scan {
+  position: absolute;
+  inset: 0;
+  background: repeating-linear-gradient(
+    180deg,
+    rgba(0, 0, 0, 0) 0,
+    rgba(0, 0, 0, 0) 2px,
+    rgba(0, 0, 0, 0.26) 3px,
+    rgba(0, 0, 0, 0) 4px
+  );
+  opacity: 0.6;
+  animation: flicker 8s linear infinite;
+}
+
+.crt__vignette {
+  position: absolute;
+  inset: 0;
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.55) 100%);
+}
+
+@keyframes grain {
+  0% { transform: translate(0, 0); }
+  20% { transform: translate(-40px, 22px); }
+  40% { transform: translate(28px, -36px); }
+  60% { transform: translate(-18px, -12px); }
+  80% { transform: translate(36px, 30px); }
+  100% { transform: translate(0, 0); }
+}
+
+@keyframes flicker {
+  0%, 61%, 63.5%, 100% { opacity: 0.6; }
+  62% { opacity: 0.42; }
+  62.6% { opacity: 0.68; }
+}
+
+/* ── Reduced motion ─────────────────────────────────────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    transition-delay: 0ms !important;
+    scroll-behavior: auto !important;
+  }
+  .crt__grain,
+  .crt__scan,
+  .cursor {
+    animation: none !important;
+  }
+}
