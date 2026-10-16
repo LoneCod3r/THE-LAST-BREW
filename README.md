@@ -1,4 +1,4 @@
-# Mystery Game — *THE CHOICE*
+# THE LAST BREW
 
 > **One machine. Three coffees. No coffee without a correct answer.**
 
@@ -106,8 +106,8 @@ artwork is the supplied photograph plus SVG and CSS overlays.
 ### Install and run
 
 ```bash
-git clone https://github.com/LoneCod3r/Mystery_game.git
-cd Mystery_game
+git clone https://github.com/LoneCod3r/THE-LAST-BREW.git
+cd THE-LAST-BREW
 npm ci             # installs exactly what package-lock.json specifies
 npm run dev        # starts the dev server
 ```
@@ -168,7 +168,8 @@ without a correct answer, and a drinking event counts once per brew, whatever th
 
 ## Progress persistence
 
-Progress is saved in the browser's `localStorage` under the key **`the-choice/progress`**:
+Progress is saved in the browser's `localStorage` under the key **`the-choice/progress`** (named after the
+project's earlier working title, and kept so existing saves still load):
 
 ```json
 {

@@ -1,7 +1,7 @@
 {
   "name": "the-choice",
   "version": "1.0.0",
-  "description": "THE CHOICE — an interactive archival mystery that ends at a coffee machine.",
+  "description": "THE LAST BREW — an interactive archival mystery that ends at a coffee machine.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit -p tsconfig.json && vite build",
