@@ -312,22 +312,26 @@ Clicking the body or underside always leads back inside. With the keyboard: Tab 
 turn, Enter or Space to look in or out, R for the rim step, Home to look inside, Escape for the first
 view. The quote space beneath the cup is empty; it is not written yet.
 
-**The reading.** Hold still on the coffee (about half a second), or press **D** with the cup focused,
-to take a sip; three sips empty it. A press that moves first is a drag, as before, and a press that
-has sipped neither turns nor clicks. The cup stays. Once it is empty, the grounds show:
+**The reading.** To take a sip, press and hold (a little over half a second) while looking into the
+cup, on the coffee or the inside of the cup above it; or press **D** with the cup focused. A small
+wobble during the hold still counts; a press that clearly moves is a drag and turns the cup, and a
+press that has sipped neither turns nor clicks. Three sips empty the cup. The cup stays, and the
+grounds show:
 
 - on the bottom, a **clock with no numbers**: twelve equal marks, a short thick hand and a long thin one;
-- on the inside wall above the handle, **TW▒LVE**: a drip hides the first E and runs on down the wall
-  and across the bottom, ending exactly on one mark. That mark is twelve;
+- on the inside wall above the handle, **`TW?LVE`**: a drip hides the first E and runs on down the wall
+  and across the bottom as a trail, ending on the mark beneath the handle. That mark is twelve;
 - under the base, pressed in: **`_:__`**, a time with one hour digit and two minute digits.
 
 Read clockwise from twelve: the long hand is on the fourth mark (20 minutes), the short hand a third
 of the way past the seventh (7). The answer is **7:20**. Once both clues have been in view (the
 clock from above, the word across the opening with the handle behind; in any order), turning the
-cup over lets the time be written into the stamp. It is a real text field over the base that follows
-it as the cup turns. A wrong time gets only *The grounds disagree.* The right one presses 7:20 into
-the base and opens **ARCHIVE ENTRY 12, THE LAST DROP** below the cup. Screen readers hear the
-same clues described when the view shows them. Nothing is kept: a reload refills the cup.
+cup over unlocks the answer field on the underside. It is a real text field over the base that
+follows it as the cup turns; tapping the base focuses it, and typing fills the slots in order. The
+field keeps only digits, so `7:20`, `720` and `07:20` are all accepted. A wrong time gets only
+*The grounds disagree.* The right one presses 7:20 into the base and opens the final archive message,
+**THE LAST DROP**, below the cup. Screen readers hear the same clues described when the view shows
+them. Nothing is kept: a reload refills the cup.
 
 **The final screen** shows:
 
