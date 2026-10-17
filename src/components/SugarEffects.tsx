@@ -5,7 +5,7 @@ import { Sigil } from './Glyphs';
 
 export type SugarDirection = 'up' | 'down';
 
-type Tone = 'green' | 'ivory' | 'brass';
+type Tone = 'accent' | 'pale' | 'ash';
 
 interface Particle {
   key: number;
@@ -37,7 +37,7 @@ const rand = (min: number, max: number) => min + Math.random() * (max - min);
 
 function pickTone(): Tone {
   const r = Math.random();
-  return r < 0.55 ? 'green' : r < 0.85 ? 'ivory' : 'brass';
+  return r < 0.55 ? 'pale' : r < 0.85 ? 'accent' : 'ash';
 }
 
 /** A point on an ellipse around the machine, never below its base. */

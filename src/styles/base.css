@@ -1,29 +1,29 @@
 /* ── Tokens ─────────────────────────────────────────────────────────────── */
 :root {
-  --bg: #0b0d0c;
-  --bg-raised: #101311;
-  --bg-sunk: #070908;
-  --ivory: #d6d0bc;
-  --ivory-dim: #a6a090;
-  --ivory-faint: #807d72;
-  --line: rgba(214, 208, 188, 0.13);
-  --line-strong: rgba(214, 208, 188, 0.3);
-  --green: #8baf91;
-  --green-soft: rgba(139, 175, 145, 0.14);
-  --green-glow: rgba(139, 175, 145, 0.45);
-  --brass: #b49a6c;
-  --brass-soft: rgba(180, 154, 108, 0.16);
-  --crimson: #873f3f;
-  --crimson-text: #bc6767;
-  --paper: #c9bea5;
-  --paper-shade: #b5a98e;
-  --ink: #1d1b16;
-  --ink-soft: #4a4436;
+  /* Mostly monochrome: charcoal, soft off-white, muted grey. */
+  --bg: #0e0f10;
+  --bg-raised: #141617;
+  --bg-sunk: #090a0b;
+  --fg: #d8d6d0;
+  --fg-dim: #9a9994;
+  --fg-faint: #6e6d69;
+  --line: rgba(216, 214, 208, 0.1);
+  --line-strong: rgba(216, 214, 208, 0.22);
+  /* The one accent: a cold, desaturated phosphor green-grey, used for machine readouts and focus. */
+  --accent: #97ab9e;
+  --accent-soft: rgba(151, 171, 158, 0.12);
+  --accent-glow: rgba(151, 171, 158, 0.22);
+  /* Errors only: a faded red. */
+  --alert: #ad7671;
+  /* Case files: cool, faded paper and near-black ink. */
+  --paper: #c3c1ba;
+  --ink: #18191a;
+  --ink-soft: #4a4b4c;
 
+  /* Display: titles and the landing line. Sans: interface and documents. Mono: machine readouts and codes. */
+  --display: 'IBM Plex Sans Condensed', 'Arial Narrow', 'Helvetica Neue', Arial, sans-serif;
+  --sans: 'IBM Plex Sans', 'Helvetica Neue', Arial, system-ui, sans-serif;
   --mono: 'IBM Plex Mono', ui-monospace, 'SFMono-Regular', Menlo, Consolas, 'Liberation Mono', monospace;
-  /* Archival typewriter for the case files: crisp and readable. */
-  --type: 'Courier Prime', 'American Typewriter', 'Courier New', Courier, monospace;
-  --serif: 'Cormorant Garamond', 'Iowan Old Style', 'Palatino Linotype', Garamond, 'Times New Roman', serif;
 
   --gutter: clamp(16px, 4vw, 48px);
 
@@ -61,8 +61,8 @@ body {
   min-height: 100vh;
   min-height: var(--app-h, 100dvh);
   background: var(--bg);
-  color: var(--ivory);
-  font-family: var(--mono);
+  color: var(--fg);
+  font-family: var(--sans);
   font-size: 16px;
   line-height: 1.55;
   -webkit-font-smoothing: antialiased;
@@ -70,7 +70,7 @@ body {
 }
 
 ::selection {
-  background: var(--green);
+  background: var(--accent);
   color: var(--bg);
 }
 
@@ -103,7 +103,7 @@ button {
 }
 
 :focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
@@ -133,8 +133,7 @@ button {
   height: 1.05em;
   margin-left: 0.12em;
   vertical-align: -0.16em;
-  background: var(--green);
-  box-shadow: 0 0 8px var(--green-glow);
+  background: var(--accent);
   animation: blink 1.05s steps(1) infinite;
 }
 
@@ -144,7 +143,7 @@ button {
   }
 }
 
-/* ── Buttons: mechanical, not playful ───────────────────────────────────── */
+/* ── Buttons: plain, quiet, mechanical ──────────────────────────────────── */
 .btn {
   display: inline-flex;
   align-items: center;
@@ -155,12 +154,12 @@ button {
   border: 1px solid var(--line-strong);
   border-radius: 2px;
   background: transparent;
-  font-family: var(--mono);
-  font-size: 0.76rem;
-  font-weight: 500;
-  letter-spacing: 0.16em;
+  font-family: var(--sans);
+  font-size: 0.78rem;
+  font-weight: 600;
+  letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--ivory);
+  color: var(--fg);
   transition:
     border-color 120ms linear,
     background-color 120ms linear,
@@ -169,8 +168,8 @@ button {
 }
 
 .btn:hover {
-  border-color: var(--brass);
-  color: var(--brass);
+  border-color: var(--fg-dim);
+  color: var(--fg);
 }
 
 .btn:active {
@@ -179,32 +178,32 @@ button {
 }
 
 .btn--primary {
-  border-color: var(--green);
-  color: var(--green);
-  background: var(--green-soft);
+  border-color: var(--accent);
+  color: var(--accent);
+  background: var(--accent-soft);
   box-shadow: inset 0 -2px 0 rgba(0, 0, 0, 0.35);
 }
 
 .btn--primary:hover {
-  border-color: var(--green);
+  border-color: var(--accent);
   color: var(--bg);
-  background: var(--green);
+  background: var(--accent);
 }
 
 .btn--ghost {
   border-color: transparent;
   padding-inline: 0.4rem;
-  color: var(--ivory-dim);
+  color: var(--fg-dim);
 }
 
 .btn--ghost:hover {
   border-color: var(--line-strong);
-  color: var(--ivory);
+  color: var(--fg);
 }
 
 .btn--quiet {
   border-style: dashed;
-  color: var(--ivory-dim);
+  color: var(--fg-dim);
 }
 
 .btn--ink {
@@ -223,19 +222,16 @@ button {
   outline-color: var(--ink);
 }
 
-/* ── Paper surface ──────────────────────────────────────────────────────── */
+/* ── Paper surface: a faded photocopy, not parchment ────────────────────── */
 .paper {
   position: relative;
   color: var(--ink);
   background-color: var(--paper);
   background-image:
-    radial-gradient(ellipse at 30% 20%, rgba(255, 250, 230, 0.28), transparent 60%),
-    radial-gradient(ellipse at 100% 100%, rgba(90, 70, 40, 0.22), transparent 55%),
+    linear-gradient(180deg, rgba(255, 255, 255, 0.06), rgba(0, 0, 0, 0.08)),
     var(--grain);
-  background-blend-mode: normal, multiply, multiply;
-  box-shadow:
-    0 1px 0 rgba(255, 255, 255, 0.15) inset,
-    0 18px 40px -18px rgba(0, 0, 0, 0.9);
+  background-blend-mode: normal, multiply;
+  box-shadow: 0 18px 40px -22px rgba(0, 0, 0, 0.9);
 }
 
 @keyframes status-in {
@@ -283,7 +279,7 @@ button {
 @keyframes stage-in {
   0% {
     opacity: 0;
-    filter: brightness(2.2) blur(2px);
+    filter: brightness(1.4) blur(1.5px);
     /* Scale rather than slide: the stage is exactly one viewport tall, and a
        downward shift would briefly add a scrollbar. */
     transform: scale(0.992);
@@ -314,7 +310,7 @@ button {
   position: absolute;
   inset: -100px;
   background-image: var(--grain);
-  opacity: 0.075;
+  opacity: 0.06;
   mix-blend-mode: screen;
   animation: grain 900ms steps(5) infinite;
 }

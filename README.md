@@ -46,11 +46,12 @@ and stores nothing outside your own browser.
 - **Picking up the coffee.** The cup waits in the foreground until you pick it up (click, tap, or
   Enter/Space). Only then does the coffee count as drunk, and the machine's display shows a message
   for that coffee.
-- **MORE COFFEE.** A wide, spacebar-style metal key with a brass edge, set into the casing under the
+- **MORE COFFEE.** A wide, spacebar-style graphite key with a thin steel edge, set into the casing under the
   screen. It appears only after the cup is picked up and continues to the next message, or back to a
   fresh machine. Details are in [Design and interaction](#design-and-interaction).
 - **Persistent progress.** Solved puzzles, finished coffees, Easter eggs and the final reward survive
-  a reload (browser `localStorage`). A small **brass seal** marks each solved coffee on the machine.
+  a reload (browser `localStorage`). A small pale **mark** in the corner of each solved coffee's button
+  shows it on the machine.
 - **Easter eggs and a final reward.** Curious Barista, Night Shift, Missing Bean, Coffee Ritual, and
   **The Secret Blend**: a final screen with an archive entry and the achievement
   **MASTER OF THE ARCHIVE**. How to find them is under
@@ -72,7 +73,7 @@ and stores nothing outside your own browser.
 5. **Pick up the cup.** The cup comes toward you and waits. Pick it up; this completes the "drinking".
 6. **Read the machine's response**, then press **MORE COFFEE** to continue. After a few coffees there
    may be more than one page; each press shows the next one.
-7. **Repeat.** The machine resets (no selection, no sugar), and solved coffees carry a brass seal. A
+7. **Repeat.** The machine resets (no selection, no sugar), and solved coffees carry a small mark. A
    solved puzzle can be played again, but it must be answered again each time.
 8. **The final reward** unlocks once all three puzzles are solved *and* each of their coffees has been
    picked up. It plays right after the message that completes the set.
@@ -87,7 +88,7 @@ Versions are those in `package-lock.json`.
 | [TypeScript](https://www.typescriptlang.org) | 7.0 | Strict typing (`tsc --noEmit` is the type check) |
 | [Vite](https://vite.dev) + `@vitejs/plugin-react` | 8.3 / 6.1 | Dev server, hot reload, production build |
 | [Vitest](https://vitest.dev) | 5.0 | Unit tests (Node environment) |
-| `@fontsource/ibm-plex-mono`, `courier-prime`, `cormorant-garamond` | 5.3 | Self-hosted fonts: machine display, case files, landing line and puzzle questions |
+| `@fontsource/ibm-plex-sans-condensed`, `ibm-plex-sans`, `ibm-plex-mono` | 5.3 | Self-hosted fonts: titles, interface and case files, machine readouts and codes |
 | `lucide-react` | 1.58 | Declared in `package.json`, but not imported by the current source |
 
 Styling is plain CSS (custom properties, container queries); there is no CSS framework. The machine
@@ -194,7 +195,7 @@ project's earlier working title, and kept so existing saves still load):
   - Impossible combinations are corrected: drunk coffees must have been solved, and the Coffee Ritual
     needs three coffees.
   - `finalUnlocked` is *derived* from the data, never trusted as stored.
-- **It never skips a puzzle.** Saved progress only shows the seals and keeps rewards; every coffee still
+- **It never skips a puzzle.** Saved progress only shows the marks and keeps rewards; every coffee still
   requires answering its puzzle.
 - **Local only.** This is not an account or server storage. It lives in one browser on one device.
   It is lost if site data is cleared, and is not kept in private windows that discard storage. If
@@ -235,11 +236,14 @@ Those browser scripts are not part of this repository.
 
 ## Design and interaction
 
-- **Visual direction.** A dark, archival, slightly analogue mood: a real machine photograph in a
-  frame, a faint CRT scanline and grain overlay, phosphor-green text on the machine's display, and
-  brass accents for anything rewarded. There is no decorative text.
-  - **Fonts:** IBM Plex Mono for the machine, Courier Prime for the case files, Cormorant Garamond for
-    the landing line and puzzle questions.
+- **Visual direction.** Quiet, late-night and restrained: a charcoal background, soft off-white text,
+  muted greys and hairline borders, with a faint grain and scanline overlay. One desaturated
+  green-grey accent is used for the machine's readouts, focus and the final achievement; a faded red
+  appears only for refused answers. Hierarchy comes from type and spacing rather than frames or
+  glow. There is no decorative text.
+  - **Fonts** (one superfamily, bundled with the app): IBM Plex Sans Condensed for titles and the
+    landing line, IBM Plex Sans for interface text and case files, and IBM Plex Mono for machine
+    readouts, archive IDs, codes and status messages.
 - **The machine.** Every overlay is positioned in fractions of the photograph and sized in container
   units, so the screen, the hand, the cup and the casing parts stay locked to the photo at any size.
 - **MORE COFFEE.** A native `<button>`, so a mouse click, a tap, **Enter** or **Space** each activate
@@ -273,7 +277,7 @@ never blocks a click.
 
 | Egg | How to find it |
 | --- | --- |
-| **Curious Barista** | Press the small brass maker's badge on the front of the drip tray **5 times**, each within 3 s of the last. It is a focusable button, so Tab + Enter works. *"You know, most people just want coffee."* It is disabled while the cup is moving or waiting. |
+| **Curious Barista** | Press the small pewter maker's badge on the front of the drip tray **5 times**, each within 3 s of the last. It is a focusable button, so Tab + Enter works. *"You know, most people just want coffee."* It is disabled while the cup is moving or waiting. |
 | **Night Shift** | On the selection screen, while the machine is idle, press **N** three times within 2 s. Not while typing an answer or with a control focused; modifiers and held-key repeats are ignored. *ARCHIVE ENTRY 07.* |
 | **Missing Bean** | A single coffee bean rests on the right-hand bean-hopper lid (accessible name "Coffee bean"). *"A good eye makes a good barista."* |
 | **Coffee Ritual** | Finish (pick up) **three coffees** of any kind, across visits. The next display page reads *"Ah. A regular."* with a REGULAR CUSTOMER badge. |
@@ -286,7 +290,7 @@ never blocks a click.
 - *ARCHIVE ENTRY 00*, which ties the three answers together;
 - the achievement **MASTER OF THE ARCHIVE**.
 
-It plays in full once. Afterwards, a three-dot brass seal on the machine's casing reopens it directly,
+It plays in full once. Afterwards, a small three-dot seal on the machine's casing reopens it directly,
 including after a reload.
 
 </details>

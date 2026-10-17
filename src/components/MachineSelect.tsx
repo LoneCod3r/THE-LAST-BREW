@@ -11,7 +11,7 @@ import { SugarParticles, SugarSigil, useSugarEffects } from './SugarEffects';
 import { VendingMachine, rectStyle } from './VendingMachine';
 
 export interface MachineSelectProps {
-  /** Puzzles solved on this or an earlier visit: each gets a brass seal. */
+  /** Puzzles solved on this or an earlier visit: each gets a small mark. */
   solved: readonly PathId[];
   /** Coffee already chosen, e.g. before backing out of its puzzle. */
   selection: PathId | null;

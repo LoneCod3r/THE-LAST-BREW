@@ -114,8 +114,8 @@ export function VendingMachine({ screen, hand, dispense, cupStage = 'tray', onPi
         <svg className="vm__fx" viewBox={`0 0 ${PHOTO.width} ${PHOTO.height}`} preserveAspectRatio="none" aria-hidden="true">
           <defs>
             <radialGradient id={ref('glow')}>
-              <stop offset="0" stopColor="#ffb661" stopOpacity="0.55" />
-              <stop offset="1" stopColor="#ffb661" stopOpacity="0" />
+              <stop offset="0" stopColor="#d6d9d2" stopOpacity="0.32" />
+              <stop offset="1" stopColor="#d6d9d2" stopOpacity="0" />
             </radialGradient>
             <radialGradient id={ref('contact')}>
               <stop offset="0" stopColor="#000" stopOpacity="0.7" />

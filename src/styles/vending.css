@@ -34,8 +34,8 @@
   width: min(100cqw, 640px, calc((100cqh - 2 * var(--fpad) - 2px) * 487 / 608 + 2 * var(--fpad) + 2px));
   margin: 0;
   padding: var(--fpad);
-  border: 1px solid rgba(180, 154, 108, 0.35);
-  background: #141513;
+  border: 1px solid var(--line);
+  background: #121314;
   box-shadow:
     0 30px 60px -30px #000,
     inset 0 0 0 1px rgba(0, 0, 0, 0.6);
@@ -55,7 +55,7 @@
   width: 100%;
   height: 100%;
   object-fit: contain;
-  filter: saturate(0.8) contrast(1.05) brightness(0.9) sepia(0.1);
+  filter: saturate(0.72) contrast(1.06) brightness(0.86);
   user-select: none;
 }
 
@@ -211,7 +211,7 @@
 }
 
 .vm__cup:not([inert]) .vm__cup-art:hover img {
-  filter: brightness(1.08) drop-shadow(0 0 3px rgba(180, 154, 108, 0.35));
+  filter: brightness(1.08) drop-shadow(0 0 3px rgba(216, 214, 208, 0.18));
 }
 
 /* Thin, because the layer is scaled up around it. */
@@ -276,7 +276,7 @@
 }
 
 .vm.is-handoff .vm__photo {
-  filter: saturate(0.7) contrast(1.05) brightness(0.5) sepia(0.15);
+  filter: saturate(0.6) contrast(1.05) brightness(0.5);
 }
 
 /* Darken, never fade: the screen overlay must stay opaque over the photo's own display. */
@@ -294,7 +294,7 @@
   transition: filter 900ms ease-out;
 }
 
-/* ── MORE COFFEE: a wide metal key, set into the band under the screen ──── */
+/* ── MORE COFFEE: a wide graphite key, set into the band under the screen ─ */
 .more-key {
   display: grid;
   place-items: center;
@@ -342,11 +342,11 @@
     repeating-linear-gradient(90deg, rgba(255, 255, 255, 0.025) 0 1px, transparent 1px 3px),
     linear-gradient(180deg, #3c3d3a 0%, #2a2b28 48%, #1c1d1b 100%);
   box-shadow:
-    0 0 0 max(1px, 0.2cqw) rgba(180, 154, 108, 0.7),
+    0 0 0 max(1px, 0.2cqw) rgba(170, 172, 170, 0.32),
     inset 0 max(1px, 0.22cqw) 0 rgba(255, 255, 255, 0.16),
     inset 0 calc(-1 * max(1px, 0.3cqw)) 0 rgba(0, 0, 0, 0.55),
     0 var(--depth) 0 #0a0a09,
-    0 calc(var(--depth) + max(1px, 0.2cqw)) 0 rgba(180, 154, 108, 0.28),
+    0 calc(var(--depth) + max(1px, 0.2cqw)) 0 rgba(170, 172, 170, 0.12),
     0 calc(var(--depth) * 1.6) max(4px, 1.1cqw) rgba(0, 0, 0, 0.75);
   font-family: var(--mono);
   font-size: max(7.5px, 1.75cqw);
@@ -354,7 +354,7 @@
   line-height: 1;
   letter-spacing: 0.22em;
   white-space: nowrap;
-  color: #d8c08f;
+  color: #c9c8c2;
   text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.85);
   transition:
     transform 70ms ease-out,
@@ -366,16 +366,16 @@
   filter: brightness(1.14);
 }
 
-/* Pressed: the cap travels down onto its skirt; the brass edge stays. */
+/* Pressed: the cap travels down onto its skirt; the edge stays. */
 .more-key:active .more-key__cap,
 .more-key.is-down .more-key__cap {
   transform: translateY(var(--depth));
   box-shadow:
-    0 0 0 max(1px, 0.2cqw) rgba(180, 154, 108, 0.7),
+    0 0 0 max(1px, 0.2cqw) rgba(170, 172, 170, 0.32),
     inset 0 max(1px, 0.22cqw) 0 rgba(255, 255, 255, 0.08),
     inset 0 calc(-1 * max(1px, 0.3cqw)) 0 rgba(0, 0, 0, 0.55),
     0 0 0 #0a0a09,
-    0 max(1px, 0.2cqw) 0 rgba(180, 154, 108, 0.28),
+    0 max(1px, 0.2cqw) 0 rgba(170, 172, 170, 0.12),
     0 1px max(2px, 0.5cqw) rgba(0, 0, 0, 0.75);
   filter: brightness(0.92);
 }
@@ -385,7 +385,7 @@
 }
 
 .more-key:focus-visible .more-key__cap {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--accent);
   outline-offset: 3px;
 }
 
@@ -413,11 +413,11 @@
 .casing__badge:focus-visible,
 .casing__bean:focus-visible,
 .casing__seal:focus-visible {
-  outline: 2px solid var(--green);
+  outline: 2px solid var(--accent);
   outline-offset: -2px;
 }
 
-/* The maker's badge: a small brass plate on the drip tray, engraved with a cup. */
+/* The maker's badge: a small pewter plate on the drip tray, engraved with a cup. */
 .casing__badge {
   width: max(32px, 12cqw);
   height: max(26px, 5cqw);
@@ -429,12 +429,12 @@
   width: 8.2cqw;
   height: 2.9cqw;
   border-radius: 999px;
-  background: linear-gradient(180deg, #c8b07e, #8d764c 55%, #6c5937);
+  background: linear-gradient(180deg, #8f908c, #5f605d 55%, #474846);
   box-shadow:
-    inset 0 0 0 max(0.5px, 0.18cqw) rgba(40, 30, 14, 0.55),
+    inset 0 0 0 max(0.5px, 0.18cqw) rgba(0, 0, 0, 0.45),
     0 max(0.5px, 0.15cqw) max(1px, 0.3cqw) rgba(0, 0, 0, 0.8);
-  color: #3a2c14;
-  opacity: 0.82;
+  color: #252625;
+  opacity: 0.8;
   transition: filter 160ms ease-out;
 }
 
@@ -463,7 +463,7 @@
   filter: drop-shadow(0 0.15cqw 0.2cqw rgba(0, 0, 0, 0.6));
 }
 
-/* The Secret Blend seal: three brass dots in a ring, left on the band under the screen. */
+/* The Secret Blend seal: three pale dots in a steel ring, left on the band under the screen. */
 .casing__seal {
   width: max(44px, 9cqw);
   height: max(44px, 9cqw);
@@ -475,10 +475,8 @@
   width: max(16px, 4.2cqw);
   aspect-ratio: 1;
   border-radius: 50%;
-  background: radial-gradient(circle at 35% 30%, #4a3a1e, #1c160b 75%);
-  box-shadow:
-    0 0 0 max(1px, 0.25cqw) var(--brass),
-    0 0 max(4px, 1.4cqw) rgba(180, 154, 108, 0.35);
+  background: radial-gradient(circle at 35% 30%, #2c2e2f, #121314 75%);
+  box-shadow: 0 0 0 max(1px, 0.25cqw) rgba(170, 172, 170, 0.5);
 }
 
 .casing__seal-disc i {
@@ -486,7 +484,7 @@
   width: 22%;
   aspect-ratio: 1;
   border-radius: 50%;
-  background: var(--brass);
+  background: var(--fg-dim);
 }
 
 .casing__seal-disc i:nth-child(1) { left: 39%; top: 18%; }
@@ -509,9 +507,9 @@
   60% { filter: brightness(1.3); transform: translateX(-0.4px); }
 }
 
-/* Secret Blend: a brass light rises through the machine, the display flares, then settles. */
+/* Secret Blend: a cold light rises through the machine, the display flickers, then settles. */
 .vm.is-unveiling .vm__photo {
-  filter: saturate(0.85) contrast(1.05) brightness(0.8) sepia(0.35);
+  filter: saturate(0.5) contrast(1.08) brightness(0.72);
   transition: filter 2400ms ease-in-out;
 }
 
@@ -521,7 +519,7 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background: radial-gradient(ellipse at 50% 60%, rgba(214, 178, 110, 0.4), transparent 62%);
+  background: radial-gradient(ellipse at 50% 60%, rgba(190, 205, 198, 0.2), transparent 60%);
   mix-blend-mode: screen;
   animation: unveil-glow 3200ms ease-in-out both;
 }
@@ -543,14 +541,14 @@
 .vmui {
   position: absolute;
   inset: 0;
-  background: radial-gradient(ellipse at 50% 40%, #142219, #070c09 78%);
+  background: radial-gradient(ellipse at 50% 40%, #141b17, #070908 78%);
   box-shadow:
     inset 0 0 3cqw rgba(0, 0, 0, 0.85),
     inset 0 0 0 0.3cqw #050806;
   font-family: var(--mono);
   font-size: max(2.2cqw, 7px);
   letter-spacing: 0.08em;
-  color: var(--green);
+  color: var(--accent);
 }
 
 .vmui::after {
@@ -572,16 +570,16 @@
   justify-content: center;
   gap: 0.5cqw;
   padding: 0.5cqw;
-  border: 1px solid rgba(139, 175, 145, 0.45);
+  border: 1px solid rgba(151, 171, 158, 0.45);
   border-radius: 0.4cqw;
-  background: rgba(139, 175, 145, 0.05);
+  background: rgba(151, 171, 158, 0.05);
   font-family: var(--mono);
   font-size: max(2.1cqw, 8px);
   font-weight: 600;
   line-height: 1.12;
   letter-spacing: 0.08em;
   text-align: center;
-  color: var(--green);
+  color: var(--accent);
   transition:
     background-color 120ms linear,
     color 120ms linear,
@@ -590,13 +588,12 @@
 
 .vmui__btn:hover:not(:disabled),
 .vmui__start:hover:not(:disabled) {
-  background: rgba(139, 175, 145, 0.15);
-  box-shadow: 0 0 1.4cqw rgba(139, 175, 145, 0.3);
+  background: rgba(151, 171, 158, 0.15);
 }
 
 .vmui__btn:focus-visible,
 .vmui__start:focus-visible {
-  outline: 2px solid var(--ivory);
+  outline: 2px solid var(--fg);
   outline-offset: -4px;
 }
 
@@ -607,10 +604,9 @@
 
 .vmui__btn.is-selected,
 .vmui__btn.is-selected:hover:not(:disabled) {
-  border-color: var(--green);
-  background: var(--green);
-  color: #07100b;
-  box-shadow: 0 0 2cqw rgba(139, 175, 145, 0.55);
+  border-color: var(--accent);
+  background: var(--accent);
+  color: #0b0f0d;
 }
 
 .vmui__glyph {
@@ -635,7 +631,7 @@
   }
 }
 
-/* A solved case: a small brass seal in the button's corner. */
+/* A solved case: a small pale mark in the button's corner. */
 .vmui__seal {
   position: absolute;
   top: 7%;
@@ -643,26 +639,25 @@
   width: max(1.3cqw, 5px);
   height: max(1.3cqw, 5px);
   border-radius: 50%;
-  background: var(--brass);
-  box-shadow: 0 0 0 max(0.3cqw, 1px) rgba(180, 154, 108, 0.25);
+  background: var(--fg-dim);
+  box-shadow: 0 0 0 max(0.3cqw, 1px) rgba(216, 214, 208, 0.16);
 }
 
 .vmui__btn.is-selected .vmui__seal {
-  background: #3d2f12;
+  background: #1f2621;
 }
 
 .vmui__start {
-  border-color: var(--brass);
-  background: rgba(180, 154, 108, 0.08);
+  border-color: rgba(216, 214, 208, 0.45);
+  background: rgba(216, 214, 208, 0.04);
   font-size: max(2.5cqw, 9px);
   letter-spacing: 0.3em;
   padding-left: calc(0.5cqw + 0.3em);
-  color: var(--brass);
+  color: var(--fg);
 }
 
 .vmui__start:hover:not(:disabled) {
-  background: rgba(180, 154, 108, 0.2);
-  box-shadow: 0 0 1.4cqw rgba(180, 154, 108, 0.35);
+  background: rgba(216, 214, 208, 0.12);
 }
 
 /* Two identical keyframes so consecutive presses always retrigger. */
@@ -694,15 +689,15 @@
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid rgba(139, 175, 145, 0.45);
+  border: 1px solid rgba(151, 171, 158, 0.45);
   border-radius: 0.4cqw;
-  background: linear-gradient(rgba(139, 175, 145, 0.1), rgba(139, 175, 145, 0.02));
+  background: linear-gradient(rgba(151, 171, 158, 0.1), rgba(151, 171, 158, 0.02));
   box-shadow: inset 0 -0.3cqw 0 rgba(0, 0, 0, 0.45);
   font-family: var(--mono);
   font-size: max(3.4cqw, 12px);
   font-weight: 500;
   line-height: 1;
-  color: var(--green);
+  color: var(--accent);
   transition:
     background-color 120ms linear,
     box-shadow 120ms linear,
@@ -710,14 +705,12 @@
 }
 
 .vmui__sugar:hover:not(:disabled) {
-  background: rgba(139, 175, 145, 0.16);
-  box-shadow:
-    inset 0 -0.3cqw 0 rgba(0, 0, 0, 0.45),
-    0 0 1.4cqw rgba(139, 175, 145, 0.3);
+  background: rgba(151, 171, 158, 0.16);
+  box-shadow: inset 0 -0.3cqw 0 rgba(0, 0, 0, 0.45);
 }
 
 .vmui__sugar:focus-visible {
-  outline: 2px solid var(--ivory);
+  outline: 2px solid var(--fg);
   outline-offset: -4px;
 }
 
@@ -737,7 +730,7 @@
 .vmui__level i {
   width: max(2.1cqw, 5px);
   height: max(2.1cqw, 5px);
-  border: 1px solid rgba(139, 175, 145, 0.45);
+  border: 1px solid rgba(151, 171, 158, 0.45);
   border-radius: 1px;
   transition:
     background-color 220ms linear,
@@ -745,9 +738,8 @@
 }
 
 .vmui__level i.is-on {
-  border-color: rgba(233, 228, 212, 0.9);
-  background: #e9e4d4;
-  box-shadow: 0 0 1.2cqw rgba(139, 175, 145, 0.75);
+  border-color: rgba(222, 221, 216, 0.9);
+  background: #dedcd6;
 }
 
 /* START with nothing selected: the coffee keys pulse once, in warning red. */
@@ -761,15 +753,15 @@
 
 @keyframes vm-alert-a {
   30% {
-    border-color: var(--crimson-text);
-    box-shadow: 0 0 1.6cqw rgba(188, 103, 103, 0.55);
+    border-color: var(--alert);
+    box-shadow: 0 0 1cqw rgba(173, 118, 113, 0.4);
   }
 }
 
 @keyframes vm-alert-b {
   30% {
-    border-color: var(--crimson-text);
-    box-shadow: 0 0 1.6cqw rgba(188, 103, 103, 0.55);
+    border-color: var(--alert);
+    box-shadow: 0 0 1cqw rgba(173, 118, 113, 0.4);
   }
 }
 
@@ -811,8 +803,8 @@
   width: auto;
   height: 78%;
   aspect-ratio: 1;
-  color: #b9e2bd;
-  filter: drop-shadow(0 0 1.4cqw rgba(139, 175, 145, 0.8));
+  color: #c3d1c7;
+  filter: drop-shadow(0 0 0.8cqw rgba(151, 171, 158, 0.4));
 }
 
 @keyframes sigil-surface {
@@ -843,14 +835,14 @@
   height: var(--s);
   margin: calc(var(--s) / -2) 0 0 calc(var(--s) / -2);
   background: currentColor;
-  box-shadow: 0 0 calc(var(--s) * 1.8) currentColor;
+  box-shadow: 0 0 calc(var(--s) * 1.2) currentColor;
   opacity: 0;
   animation-fill-mode: both;
 }
 
-.sugar-fx__p.is-green { color: #a9d6ae; }
-.sugar-fx__p.is-ivory { color: #efe7cf; }
-.sugar-fx__p.is-brass { color: #d8bd85; }
+.sugar-fx__p.is-accent { color: #b4c4ba; }
+.sugar-fx__p.is-pale { color: #e6e5e0; }
+.sugar-fx__p.is-ash { color: #8f8f8b; }
 
 /* + : crystals condense out of the air, catch the light, rise and dissolve. */
 .sugar-fx__p--up {
@@ -925,11 +917,11 @@
 .vmui__pips i {
   width: max(1.4cqw, 4px);
   height: max(1.4cqw, 4px);
-  border: 1px solid rgba(180, 154, 108, 0.6);
+  border: 1px solid rgba(216, 214, 208, 0.45);
 }
 
 .vmui__pips i.is-on {
-  background: var(--brass);
+  background: var(--fg-dim);
 }
 
 /* After the coffee: the machine's message, the ritual, or the Secret Blend. */
@@ -959,7 +951,7 @@
   font-size: max(3.6cqw, 9px);
   font-weight: 600;
   letter-spacing: 0.16em;
-  text-shadow: 0 0 2cqw rgba(139, 175, 145, 0.6);
+  text-shadow: 0 0 1.2cqw rgba(151, 171, 158, 0.25);
 }
 
 .vmui__msg-body {
@@ -968,7 +960,7 @@
   font-size: max(2.05cqw, 7px);
   line-height: 1.38;
   letter-spacing: 0.02em;
-  color: #c4d8c6;
+  color: #c2ccc5;
   text-wrap: balance;
 }
 
@@ -980,22 +972,21 @@
 .vmui__badge {
   margin: 0;
   padding: 0.5cqw 1.4cqw 0.5cqw calc(1.4cqw + 0.24em);
-  border: 1px solid var(--brass);
+  border: 1px solid rgba(216, 214, 208, 0.35);
   font-size: max(1.7cqw, 7px);
-  font-weight: 600;
+  font-weight: 500;
   letter-spacing: 0.24em;
-  color: var(--brass);
-  box-shadow: inset 0 0 1.2cqw rgba(180, 154, 108, 0.18);
+  color: var(--fg-dim);
 }
 
 .vmui__msg--secret .vmui__msg-title {
-  color: #e2c88f;
-  text-shadow: 0 0 2.4cqw rgba(214, 178, 110, 0.7);
+  color: var(--fg);
+  text-shadow: 0 0 1.2cqw rgba(216, 214, 208, 0.25);
   animation: granted-in 1600ms linear both;
 }
 
 .vmui__msg--secret .vmui__msg-body {
-  color: var(--brass);
+  color: var(--fg-dim);
 }
 
 @keyframes msg-in {
@@ -1017,7 +1008,7 @@
   justify-content: center;
   gap: max(3px, 1cqw);
   padding: 6%;
-  background: radial-gradient(ellipse at 50% 45%, rgba(16, 28, 20, 0.97), rgba(5, 9, 6, 0.98) 80%);
+  background: radial-gradient(ellipse at 50% 45%, rgba(17, 22, 19, 0.97), rgba(6, 8, 7, 0.98) 80%);
   text-align: center;
   pointer-events: none;
   animation: notice-life 5200ms linear both;
@@ -1029,7 +1020,7 @@
   font-size: max(2.4cqw, 8px);
   font-weight: 600;
   letter-spacing: 0.3em;
-  color: var(--brass);
+  color: var(--fg-dim);
 }
 
 .vmui-notice__body {
@@ -1039,7 +1030,7 @@
   line-height: 1.4;
   letter-spacing: 0.04em;
   text-wrap: balance;
-  text-shadow: 0 0 1.6cqw rgba(139, 175, 145, 0.5);
+  text-shadow: 0 0 1cqw rgba(151, 171, 158, 0.22);
 }
 
 @keyframes notice-life {
@@ -1062,7 +1053,7 @@
   letter-spacing: 0.16em;
   white-space: nowrap;
   text-align: center;
-  text-shadow: 0 0 2cqw rgba(139, 175, 145, 0.6);
+  text-shadow: 0 0 1.2cqw rgba(151, 171, 158, 0.25);
   animation: status-in 420ms steps(6);
 }
 
@@ -1079,7 +1070,7 @@
   font-size: max(1.9cqw, 7px);
   letter-spacing: 0.3em;
   text-align: center;
-  color: var(--brass);
+  color: var(--fg-dim);
 }
 
 .vmui__progress {
@@ -1089,14 +1080,14 @@
   left: 12%;
   height: 8%;
   padding: 0.45cqw;
-  border: 1px solid rgba(139, 175, 145, 0.5);
+  border: 1px solid rgba(151, 171, 158, 0.5);
 }
 
 .vmui__progress span {
   display: block;
   width: 0;
   height: 100%;
-  background: repeating-linear-gradient(90deg, var(--green) 0 1.2cqw, transparent 1.2cqw 1.6cqw);
+  background: repeating-linear-gradient(90deg, var(--accent) 0 1.2cqw, transparent 1.2cqw 1.6cqw);
   transition: width 700ms steps(6);
 }
 
