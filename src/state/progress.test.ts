@@ -1,36 +1,46 @@
 import { describe, expect, it } from 'vitest';
+import { PROGRESS_KEY, discardSavedProgress } from './legacySave';
 import {
-  PROGRESS_KEY,
   awardEgg,
   emptyProgress,
-  loadProgress,
   markFinalSeen,
   parseProgress,
   recordDrink,
   recordSolve,
-  saveProgress,
 } from './progress';
 
 function memoryStorage(initial: Record<string, string> = {}) {
   const data = new Map(Object.entries(initial));
   return {
     data,
-    getItem: (k: string) => data.get(k) ?? null,
-    setItem: (k: string, v: string) => void data.set(k, v),
+    removeItem: (k: string) => void data.delete(k),
   };
 }
 
-describe('progress persistence', () => {
-  it('round-trips through storage under a versioned key', () => {
-    const store = memoryStorage();
-    let p = recordSolve(emptyProgress(), 'mind');
-    p = recordDrink(p, 'mind').progress;
-    p = awardEgg(p, 'missingBean');
-    saveProgress(p, store);
-    expect(JSON.parse(store.data.get(PROGRESS_KEY)!)).toMatchObject({ version: 1 });
-    expect(loadProgress(store)).toEqual(p);
+const OLD_SAVE = JSON.stringify({ version: 1, solved: ['key', 'mind', 'void'], drunk: ['key', 'mind', 'void'], coffees: 7, eggs: ['nightShift'], finalSeen: true });
+
+describe('page load: a fresh session', () => {
+  it('removes the save left by earlier versions, and nothing else', () => {
+    const store = memoryStorage({ [PROGRESS_KEY]: OLD_SAVE, 'another-app/settings': '{"theme":"dark"}', 'the-choice/other': 'x' });
+    discardSavedProgress(store);
+    expect(store.data.has(PROGRESS_KEY)).toBe(false);
+    expect(store.data.get('another-app/settings')).toBe('{"theme":"dark"}');
+    expect(store.data.get('the-choice/other')).toBe('x');
   });
 
+  it('is safe with no save, no storage, or storage that throws', () => {
+    expect(() => discardSavedProgress(memoryStorage())).not.toThrow();
+    expect(() => discardSavedProgress(null)).not.toThrow();
+    const broken = {
+      removeItem: () => {
+        throw new Error('denied');
+      },
+    };
+    expect(() => discardSavedProgress(broken)).not.toThrow();
+  });
+});
+
+describe('progress records', () => {
   it('falls back to empty progress on missing, malformed or foreign data', () => {
     for (const raw of [null, '', '{', 'null', '42', '[]', '"x"', '{"version":2,"solved":["key"]}', '{"solved":["key"]}']) {
       expect(parseProgress(raw)).toEqual(emptyProgress());
@@ -71,20 +81,6 @@ describe('progress persistence', () => {
 
   it('caps an absurd coffee count', () => {
     expect(parseProgress({ version: 1, coffees: 1e12 }).coffees).toBe(9999);
-  });
-
-  it('survives storage that throws', () => {
-    const broken = {
-      getItem: () => {
-        throw new Error('denied');
-      },
-      setItem: () => {
-        throw new Error('quota');
-      },
-    };
-    expect(loadProgress(broken)).toEqual(emptyProgress());
-    expect(() => saveProgress(emptyProgress(), broken)).not.toThrow();
-    expect(loadProgress(null)).toEqual(emptyProgress());
   });
 });
 

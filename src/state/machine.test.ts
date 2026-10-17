@@ -149,7 +149,7 @@ describe('game state machine', () => {
     expect(s).toMatchObject({ selection: null, sugar: 0 });
   });
 
-  it('starts from stored progress, but stored progress never opens a puzzle', () => {
+  it('progress handed to the machine never opens a puzzle', () => {
     const progress = parseProgress({ version: 1, solved: ['key', 'mind', 'void', 'bogus'], drunk: ['key', 'mind', 'void'], coffees: 3, eggs: [] });
     let s = run(createInitialState(progress), { type: 'OPEN_ARCHIVE' });
     expect(s.progress.solved).toEqual(['key', 'mind', 'void']);
@@ -300,13 +300,13 @@ describe('the Secret Blend', () => {
     expect(s).toMatchObject({ screen: 'SECRET_BLEND', secretFull: false });
   });
 
-  it('after a reload it is still unlocked, and plays in full if it was never seen', () => {
+  it('an unlocked but unseen reward plays in full when opened from the machine', () => {
     const p = allThree().progress;
     expect(p.finalSeen).toBe(false);
-    const reloaded = run(createInitialState(parseProgress(JSON.stringify(p))), { type: 'OPEN_ARCHIVE' }, { type: 'OPEN_SECRET' });
-    expect(reloaded).toMatchObject({ screen: 'SECRET_BLEND', secretFull: true });
-    const seen = run(createInitialState(parseProgress(JSON.stringify(reloaded.progress))), { type: 'OPEN_ARCHIVE' }, { type: 'OPEN_SECRET' });
-    expect(seen.secretFull).toBe(false);
+    const opened = run(createInitialState(p), { type: 'OPEN_ARCHIVE' }, { type: 'OPEN_SECRET' });
+    expect(opened).toMatchObject({ screen: 'SECRET_BLEND', secretFull: true });
+    const again = run(opened, { type: 'CLOSE_SECRET' }, { type: 'OPEN_SECRET' });
+    expect(again.secretFull).toBe(false);
   });
 
   it('REVEAL_SECRET cannot be forced', () => {
@@ -314,5 +314,54 @@ describe('the Secret Blend', () => {
     expect(run(s, { type: 'REVEAL_SECRET' })).toBe(s);
     const served = drink(createInitialState(), 'key');
     expect(run(served, { type: 'REVEAL_SECRET' })).toBe(served);
+  });
+});
+
+describe('sessions: progress lasts until the page is reloaded', () => {
+  /** Everything: three puzzles, three coffees, the ritual, the eggs and the final reward, seen. */
+  function completeSession(): GameState {
+    let s = run(createInitialState(), { type: 'OPEN_ARCHIVE' }, { type: 'FIND_EGG', egg: 'curiousBarista' }, { type: 'FIND_EGG', egg: 'nightShift' }, { type: 'FIND_EGG', egg: 'missingBean' });
+    s = finish(drink(s, 'key'));
+    s = finish(drink(s, 'mind'));
+    s = finish(drink(s, 'void'));
+    return run(s, { type: 'REVEAL_SECRET' }, { type: 'CLOSE_SECRET' });
+  }
+
+  it('nothing resets during play: leaving puzzles, MORE COFFEE and the secret screen all keep progress', () => {
+    let s = completeSession();
+    const done = s.progress;
+    expect(done).toMatchObject({ solved: ['key', 'mind', 'void'], drunk: ['key', 'mind', 'void'], coffees: 3, finalUnlocked: true, finalSeen: true });
+    expect([...done.eggs].sort()).toEqual(['coffeeRitual', 'curiousBarista', 'missingBean', 'nightShift']);
+    s = run(s, { type: 'SELECT_PATH', pathId: 'mind' }, { type: 'SET_DRAFT', value: '0' }, { type: 'LEAVE_PUZZLE' }, { type: 'OPEN_SECRET' }, { type: 'CLOSE_SECRET' });
+    expect(s.progress).toBe(done);
+  });
+
+  it('a page load starts a brand-new session: the same start the app uses', () => {
+    // The app builds its state with createInitialState() on every page load; no progress is restored.
+    expect(completeSession().progress.finalSeen).toBe(true);
+    const fresh = run(createInitialState(), { type: 'OPEN_ARCHIVE' });
+    expect(fresh.progress).toEqual(emptyProgress());
+    expect(fresh).toMatchObject({ sugar: 0, selection: null, drafts: {}, serving: null, notice: null });
+  });
+
+  it('after a fresh start every reward has to be earned again', () => {
+    let s = run(createInitialState(), { type: 'OPEN_ARCHIVE' });
+    // The Secret Blend is locked again.
+    expect(run(s, { type: 'OPEN_SECRET' })).toBe(s);
+    // Each machine egg can be found again, with its message.
+    s = run(s, { type: 'FIND_EGG', egg: 'missingBean' });
+    expect(s.notice?.id).toBe('missingBean');
+    // The Coffee Ritual counts from zero: three new coffees.
+    s = finish(drink(s, 'key'));
+    s = finish(drink(s, 'key'));
+    expect(s.progress.eggs).not.toContain('coffeeRitual');
+    s = drink(s, 'key');
+    expect(s.serving?.pages).toEqual(['message', 'ritual']);
+    // And the final reward plays in full again once all three are drunk.
+    s = finish(drink(finish(s), 'mind'));
+    s = drink(s, 'void');
+    s = finish(s);
+    expect(s.serving?.unveiling).toBe(true);
+    expect(run(s, { type: 'REVEAL_SECRET' }).secretFull).toBe(true);
   });
 });

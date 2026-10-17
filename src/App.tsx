@@ -1,7 +1,6 @@
 import { useCallback, useEffect, useReducer, type ReactNode } from 'react';
 import { PATH_BY_ID } from './data/paths';
 import { createInitialState, gameReducer, type GameState } from './state/machine';
-import { loadProgress, saveProgress } from './state/progress';
 import { IntroScreen } from './components/IntroScreen';
 import { MachineSelect } from './components/MachineSelect';
 import { machineSelectProps } from './components/machineSelectProps';
@@ -25,11 +24,10 @@ function viewKey(state: GameState): string {
 }
 
 export function App() {
-  const [state, dispatch] = useReducer(gameReducer, undefined, () => createInitialState(loadProgress()));
+  // Progress lives here for the session: it survives remounts of every screen and
+  // hot updates, but a full page reload starts a fresh game.
+  const [state, dispatch] = useReducer(gameReducer, undefined, () => createInitialState());
   const key = viewKey(state);
-
-  // Progress only changes on real events (a solve, a finished coffee, an egg), so save on change.
-  useEffect(() => saveProgress(state.progress), [state.progress]);
 
   // Follow the visible viewport so an on-screen keyboard never covers the answer bar.
   useEffect(() => {

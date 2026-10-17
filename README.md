@@ -17,7 +17,7 @@ and stores nothing outside your own browser.
 - [Technology stack](#technology-stack)
 - [Getting started](#getting-started)
 - [Project structure](#project-structure)
-- [Progress persistence](#progress-persistence)
+- [Game sessions and progress](#game-sessions-and-progress)
 - [Testing and quality assurance](#testing-and-quality-assurance)
 - [Design and interaction](#design-and-interaction)
 - [Secrets and Easter eggs (spoilers)](#secrets-and-easter-eggs-spoilers)
@@ -49,9 +49,9 @@ and stores nothing outside your own browser.
 - **MORE COFFEE.** A wide, spacebar-style graphite key with a thin steel edge, set into the casing under the
   screen. It appears only after the cup is picked up and continues to the next message, or back to a
   fresh machine. Details are in [Design and interaction](#design-and-interaction).
-- **Persistent progress.** Solved puzzles, finished coffees, Easter eggs and the final reward survive
-  a reload (browser `localStorage`). A small pale **mark** in the corner of each solved coffee's button
-  shows it on the machine.
+- **Progress for the session.** Solved puzzles, finished coffees, Easter eggs and the final reward
+  are kept while you play. Reloading the page starts a fresh game. A small pale **mark** in the corner
+  of each solved coffee's button shows it on the machine.
 - **Easter eggs and a final reward.** Curious Barista, Night Shift, Missing Bean, Coffee Ritual, and
   **The Secret Blend**: a final screen with an archive entry and the achievement
   **MASTER OF THE ARCHIVE**. How to find them is under
@@ -139,10 +139,11 @@ There is no lint script in this project.
 ├── tsconfig.json
 └── src/
     ├── main.tsx               Entry: fonts, stylesheets, <App /> in StrictMode
-    ├── App.tsx                Screen routing, history/Esc handling, viewport sizing, saving progress
+    ├── App.tsx                Screen routing, history/Esc handling, viewport sizing, session progress
     ├── state/
     │   ├── machine.ts         The game as an explicit state machine (reducer)
-    │   ├── progress.ts        Saved progress: versioned, validated localStorage
+    │   ├── progress.ts        Session progress: solved, drunk, coffees, eggs, final reward
+    │   ├── legacySave.ts      Removes the save left by earlier versions, once per page load
     │   └── eggs.ts            Easter egg timing rules (pure functions)
     ├── data/
     │   ├── paths.ts           Coffee ↔ case mapping (id, label, roast colour, pour time)
@@ -167,62 +168,42 @@ Tests sit beside the code they cover (`*.test.ts`).
 Every action is honoured only on the screens that allow it. For example, the machine cannot brew
 without a correct answer, and a drinking event counts once per brew, whatever the UI sends.
 
-## Progress persistence
+## Game sessions and progress
 
-Progress is saved in the browser's `localStorage` under the key **`the-choice/progress`** (named after the
-project's earlier working title, and kept so existing saves still load):
+Progress lasts for one **game session**, which is one page load. It lives in the game's state in
+memory and is never written to storage, so **reloading the page starts a fresh game**.
 
-```json
-{
-  "version": 1,
-  "solved": ["key", "mind"],
-  "drunk": ["key"],
-  "coffees": 2,
-  "eggs": ["missingBean"],
-  "finalUnlocked": false,
-  "finalSeen": false
-}
-```
+| Resets on reload | Kept on reload |
+| --- | --- |
+| Solved puzzles (and their marks), coffees drunk, the coffee count, the Easter eggs found, the Secret Blend (locked again, and played in full again), sugar, selection and half-typed answers | Nothing: the game keeps no settings or other data meant to survive a reload |
 
-(`key`, `mind` and `void` are COFFEE, NORMAL COFFEE and STRONG COFFEE.)
-
-- **What's stored:** which puzzles are solved and which coffees were drunk, the count of finished
-  coffees, the Easter eggs found, and whether the final reward is unlocked and has been seen in full.
-- **When it changes:** only on real events: a correct answer, picking up a cup (once per brew), or
-  finding an egg.
-- **How it's restored:** on load, the record is rebuilt and validated.
-  - Malformed JSON, an unknown version, unknown ids, duplicates and wrong types fall back to safe values.
-  - Impossible combinations are corrected: drunk coffees must have been solved, and the Coffee Ritual
-    needs three coffees.
-  - `finalUnlocked` is *derived* from the data, never trusted as stored.
-- **It never skips a puzzle.** Saved progress only shows the marks and keeps rewards; every coffee still
+- **During a session nothing resets.** Leaving a puzzle, pressing MORE COFFEE, opening the final
+  screen and every screen change keep progress. So do development hot updates (Vite HMR), which
+  replace modules without reloading the page.
+- **Old saves.** Earlier versions saved progress in `localStorage` under
+  `the-choice/progress`. On each page load, `src/main.tsx` removes that one key (via
+  `src/state/legacySave.ts`), so an old save is never restored. No other `localStorage` data is
+  touched.
+- **It never skips a puzzle.** Progress only shows the marks and keeps rewards; every coffee still
   requires answering its puzzle.
-- **Local only.** This is not an account or server storage. It lives in one browser on one device.
-  It is lost if site data is cleared, and is not kept in private windows that discard storage. If
-  storage is unavailable, the game still works, and progress lasts for the visit.
-
-**Resetting progress:** open the browser's developer console on the game's page and run the line
-below, then reload. Alternatively, clear this site's data in the browser settings.
-
-```js
-localStorage.removeItem('the-choice/progress')
-```
+- **Records are validated.** `parseProgress` rebuilds a progress record from untrusted data (bad
+  types, unknown ids, impossible combinations), and the final reward's unlock is always derived from
+  the record, never trusted.
 
 ## Testing and quality assurance
 
-The repository contains **65 unit tests in 6 files**, run with `npm test`:
+The repository contains **68 unit tests in 6 files**, run with `npm test`:
 
 | File | Covers |
 | --- | --- |
 | `src/logic/puzzles.test.ts` | Each puzzle has exactly one solution (truth tables; all 1000 codes; all hat worlds); answer normalisation and validation |
-| `src/state/machine.test.ts` | State-machine transitions: no brewing without a correct answer, sugar, drafts, MORE COFFEE paging and double activation, drinking counted once, the eggs, the Coffee Ritual and the Secret Blend (first time, revisit, after reload) |
-| `src/state/progress.test.ts` | Storage round-trip, versioning, malformed or tampered data, storage that throws, the unlock rules |
+| `src/state/machine.test.ts` | State-machine transitions: no brewing without a correct answer, sugar, drafts, MORE COFFEE paging and double activation, drinking counted once, the eggs, the Coffee Ritual and the Secret Blend (first time, revisit); progress kept through every screen change, and a fresh start that requires every reward to be earned again |
+| `src/state/progress.test.ts` | Page load removes only the old save key (other storage untouched, broken storage tolerated); malformed or tampered records; the unlock rules |
 | `src/state/eggs.test.ts` | Tap and keypress timing windows; which key events count for Night Shift |
 | `src/data/machine.test.ts` | Photo geometry: buttons inside the screen, hand alignment, MORE COFFEE clearance |
-| `src/components/MachineSelect.test.ts` | Renders the selection screen with the props the app passes, for empty, missing and malformed saved data (regression test) |
+| `src/components/MachineSelect.test.ts` | Renders the selection screen with the props the app passes, for empty, missing and malformed progress records (regression test) |
 
-Before publishing this version, all three checks passed: `npm run typecheck` (clean), `npm test`
-(65/65), and `npm run build`.
+All three checks pass: `npm run typecheck` (clean), `npm test` (68/68), and `npm run build`.
 
 During development the app was also checked in a real browser (Chrome via Playwright):
 
@@ -280,7 +261,7 @@ never blocks a click.
 | **Curious Barista** | Press the small pewter maker's badge on the front of the drip tray **5 times**, each within 3 s of the last. It is a focusable button, so Tab + Enter works. *"You know, most people just want coffee."* It is disabled while the cup is moving or waiting. |
 | **Night Shift** | On the selection screen, while the machine is idle, press **N** three times within 2 s. Not while typing an answer or with a control focused; modifiers and held-key repeats are ignored. *ARCHIVE ENTRY 07.* |
 | **Missing Bean** | A single coffee bean rests on the right-hand bean-hopper lid (accessible name "Coffee bean"). *"A good eye makes a good barista."* |
-| **Coffee Ritual** | Finish (pick up) **three coffees** of any kind, across visits. The next display page reads *"Ah. A regular."* with a REGULAR CUSTOMER badge. |
+| **Coffee Ritual** | Finish (pick up) **three coffees** of any kind in one session. The next display page reads *"Ah. A regular."* with a REGULAR CUSTOMER badge. |
 | **The Secret Blend** | Solve all three puzzles and pick up each one's coffee (the eggs are not required). After the message that completes the set, MORE COFFEE starts a short sequence on the machine, then the final screen. |
 
 **The final screen** shows:
@@ -290,22 +271,21 @@ never blocks a click.
 - *ARCHIVE ENTRY 00*, which ties the three answers together;
 - the achievement **MASTER OF THE ARCHIVE**.
 
-It plays in full once. Afterwards, a small three-dot seal on the machine's casing reopens it directly,
-including after a reload.
+It plays in full once per session. Afterwards, a small three-dot seal on the machine's casing reopens
+it directly. After a page reload it has to be earned again.
 
 </details>
 
 ## Limitations
 
-- **Progress is browser-local and not tamper-proof.** Editing `localStorage` by hand can unlock the
-  final screen. It cannot make the machine dispense without a correct answer, but with no backend
-  there is nothing stronger to enforce.
+- **No saved progress.** A reload, a closed tab or a browser crash ends the session, and all progress
+  starts again. This is intentional.
 - **Small-screen readability.** On the smallest layouts (e.g. 568×320), text on the machine's own
   display goes down to about 7 px. It fits without clipping, but it is small.
 - **Night Shift and focus.** The N sequence is deliberately ignored while a button or field has focus.
   After clicking a coffee button, focus stays on it until it moves elsewhere.
-- **One-time messages.** Easter egg messages are shown only when the egg is first found; seeing them
-  again requires resetting progress.
+- **One-time messages.** Easter egg messages are shown only when the egg is first found in a session;
+  reload the page to see them again.
 - **Modern browsers only.** The layout needs container queries, `:has()` and `inert`; older browsers are
   not supported.
 - **Tooling gaps.** There is no lint script, the browser tests are not in the repository, and
@@ -317,7 +297,6 @@ These are possible improvements, not implemented features or commitments:
 
 - Add the browser (Playwright) tests to the repository and run them in CI.
 - Add a lint setup (e.g. ESLint) and remove the unused `lucide-react` dependency.
-- Add an in-game "reset progress" control.
 - Add real screenshots to this README.
 
 ## Contributing

@@ -1,15 +1,15 @@
 /**
- * Progress that survives a reload: solved puzzles, finished coffees, Easter eggs
- * and the final reward. Stored as versioned JSON and rebuilt through parseProgress,
- * which drops anything malformed or inconsistent. It is a record only: nothing in
- * it can open the machine without solving the puzzle again.
+ * Progress through one game session: solved puzzles, finished coffees, Easter eggs
+ * and the final reward. It lives in the game state only, so a full page reload
+ * starts a fresh session; nothing is restored from storage (see legacySave.ts). parseProgress rebuilds a
+ * record from untrusted data, dropping anything malformed or inconsistent. It is a
+ * record only: nothing in it can open the machine without solving the puzzle again.
  */
 import { PATHS, isPathId, type PathId } from '../data/paths';
 import { COFFEE_RITUAL, EGG_IDS, type EggId } from '../data/rewards';
 
-export const PROGRESS_KEY = 'the-choice/progress';
 export const PROGRESS_VERSION = 1;
-/** Plenty for any visit; keeps a tampered number from growing without bound. */
+/** Plenty for any session; keeps an absurd number from growing without bound. */
 const MAX_COFFEES = 9999;
 
 export interface Progress {
@@ -111,30 +111,4 @@ export function awardEgg(p: Progress, egg: EggId): Progress {
 
 export function markFinalSeen(p: Progress): Progress {
   return !p.finalUnlocked || p.finalSeen ? p : { ...p, finalSeen: true };
-}
-
-type StorageLike = Pick<Storage, 'getItem' | 'setItem'>;
-
-function defaultStorage(): StorageLike | null {
-  try {
-    return typeof window !== 'undefined' ? window.localStorage : null;
-  } catch {
-    return null;
-  }
-}
-
-export function loadProgress(storage: StorageLike | null = defaultStorage()): Progress {
-  try {
-    return parseProgress(storage?.getItem(PROGRESS_KEY) ?? null);
-  } catch {
-    return emptyProgress();
-  }
-}
-
-export function saveProgress(p: Progress, storage: StorageLike | null = defaultStorage()): void {
-  try {
-    storage?.setItem(PROGRESS_KEY, JSON.stringify(p));
-  } catch {
-    // Private mode or a full quota: progress simply lasts for this visit.
-  }
 }

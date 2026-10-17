@@ -12,6 +12,11 @@ import './styles/screens.css';
 import './styles/machine.css';
 import './styles/vending.css';
 import { App } from './App';
+import { discardSavedProgress } from './state/legacySave';
+
+// Runs once per document load (never on component remounts or hot updates): every
+// page load is a fresh game, so a save left by an earlier version is removed.
+discardSavedProgress();
 
 createRoot(document.getElementById('root')!).render(
   <StrictMode>
