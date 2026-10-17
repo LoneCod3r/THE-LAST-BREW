@@ -1249,3 +1249,126 @@
     opacity: 1;
   }
 }
+
+/* ══ ENOUGH?: THE CODE ════════════════════════════════════════════════════ */
+/* The machine goes quiet: the photo dims and the display empties. */
+.vm.is-quiet .vm__photo {
+  filter: saturate(0.4) contrast(1.05) brightness(0.42);
+  transition: filter 1800ms ease-in-out;
+}
+
+.vmui__quiet {
+  display: none;
+}
+
+/*
+ * The code surfaces in front of the machine, above the grain and scanlines so
+ * nothing lowers its contrast. Dark modules on off-white, with the standard
+ * four-module margin drawn into the code itself. No caption.
+ */
+.qr-reveal {
+  position: fixed;
+  inset: 0;
+  z-index: 102;
+  display: grid;
+  place-content: center;
+  justify-items: center;
+  gap: clamp(14px, 4vmin, 32px);
+  padding: var(--gutter);
+  background: rgba(9, 10, 11, 0.8);
+  animation: qr-dusk 1400ms ease-out both;
+}
+
+.qr-reveal:focus {
+  outline: none;
+}
+
+.qr-reveal__code {
+  display: block;
+  /* About 5px per module even on a 320px-tall phone in landscape; larger elsewhere. */
+  width: clamp(168px, min(68vmin, calc(var(--app-h, 100dvh) - 150px)), 340px);
+  aspect-ratio: 1;
+  border-radius: 2px;
+  box-shadow: 0 0 0 1px var(--line), 0 24px 60px -20px #000;
+  animation: qr-surface 2200ms cubic-bezier(0.3, 0, 0.2, 1) 200ms both;
+}
+
+.qr-reveal__code svg {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.qr-reveal__paper {
+  fill: #e6e5e0;
+}
+
+.qr-reveal__ink {
+  fill: #0a0a09;
+}
+
+.qr-reveal__code:focus-visible {
+  outline: 2px solid var(--accent);
+  outline-offset: 6px;
+}
+
+/* MORE COFFEE returns only once the code has surfaced (QR_SURFACE_MS). */
+.qr-reveal__key {
+  transition: opacity 600ms ease-out;
+}
+
+.qr-reveal__key:not(.is-shown) {
+  opacity: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@keyframes qr-dusk {
+  from {
+    background-color: rgba(9, 10, 11, 0);
+  }
+}
+
+/* It rises out of the dark, blurred, catches once like a display finding its signal, then holds. */
+@keyframes qr-surface {
+  0% {
+    opacity: 0;
+    filter: blur(10px) brightness(0.4);
+    transform: scale(0.97);
+  }
+  55% {
+    opacity: 0.85;
+    filter: blur(1.5px) brightness(0.85);
+  }
+  62% {
+    opacity: 0.45;
+  }
+  68% {
+    opacity: 0.9;
+    filter: blur(0) brightness(1);
+  }
+  100% {
+    opacity: 1;
+    filter: none;
+    transform: none;
+  }
+}
+
+/* Reduced motion: a plain fade, no blur, flicker or scale. */
+@media (prefers-reduced-motion: reduce) {
+  .vm.is-quiet .vm__photo {
+    transition: none;
+  }
+  .qr-reveal {
+    animation: qr-fade 400ms ease-out both;
+  }
+  .qr-reveal__code {
+    animation: none;
+  }
+}
+
+@keyframes qr-fade {
+  from {
+    opacity: 0;
+  }
+}

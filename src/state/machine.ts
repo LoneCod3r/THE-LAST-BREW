@@ -40,8 +40,11 @@ export interface SolveRecord {
   sugar: number;
 }
 
-/** What the display shows after a coffee, one page per MORE COFFEE press. */
-export type RewardPage = 'message' | 'ritual';
+/**
+ * What the display shows after a coffee, one page per MORE COFFEE press. Once the
+ * full set has been drunk, every coffee ends on a 'qr' page, which only ENOUGH opens.
+ */
+export type RewardPage = 'message' | 'ritual' | 'qr';
 
 /** After a finished coffee. */
 export interface Serving {
@@ -93,6 +96,8 @@ export type GameAction =
   | { type: 'DRINK_COMPLETE'; run: number }
   /** The MORE COFFEE key, pressed while the display showed `page`. */
   | { type: 'MORE_COFFEE'; page: number }
+  /** The same key, labelled Enough?, pressed while the display showed `page`; reveals the QR code. */
+  | { type: 'ENOUGH'; page: number }
   | { type: 'REVEAL_SECRET' }
   | { type: 'OPEN_SECRET' }
   | { type: 'CLOSE_SECRET' }
@@ -128,6 +133,12 @@ function toArchive(state: GameState): GameState {
 /** After a finished coffee the machine starts over: no selection, no sugar. */
 function toFreshMachine(state: GameState): GameState {
   return { ...toArchive(state), sugar: 0, selection: null, notice: null };
+}
+
+/** The key reads Enough? instead of MORE COFFEE: the next page is the QR code. */
+export function offersEnough(state: GameState): boolean {
+  const serving = state.serving;
+  return state.screen === 'PUZZLE_SOLVED' && !!serving && !serving.unveiling && serving.pages[serving.page + 1] === 'qr';
 }
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -220,20 +231,29 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       // Once per brew: a repeated or stale event never counts a second coffee.
       if (state.screen !== 'PUZZLE_SOLVED' || action.run !== state.brewRun || !state.solve || state.serving) return state;
       const drink = recordDrink(state.progress, state.solve.pathId);
-      return {
-        ...state,
-        progress: drink.progress,
-        serving: { pages: drink.ritual ? ['message', 'ritual'] : ['message'], page: 0, unveiling: false },
-      };
+      const pages: RewardPage[] = ['message'];
+      if (drink.ritual) pages.push('ritual');
+      // Only once every puzzle has been solved and drunk; never before the full set.
+      if (drink.progress.finalUnlocked) pages.push('qr');
+      return { ...state, progress: drink.progress, serving: { pages, page: 0, unveiling: false } };
     }
 
     case 'MORE_COFFEE': {
       const serving = state.serving;
       // The page token makes a double activation advance only once.
       if (state.screen !== 'PUZZLE_SOLVED' || !serving || serving.unveiling || action.page !== serving.page) return state;
+      // The QR code is never skipped: only ENOUGH moves on to it.
+      if (offersEnough(state)) return state;
       if (serving.page < serving.pages.length - 1) return { ...state, serving: { ...serving, page: serving.page + 1 } };
       if (state.progress.finalUnlocked && !state.progress.finalSeen) return { ...state, serving: { ...serving, unveiling: true } };
       return toFreshMachine(state);
+    }
+
+    case 'ENOUGH': {
+      const serving = state.serving;
+      // Same page token as MORE COFFEE: a double activation reveals the code once.
+      if (!offersEnough(state) || !serving || action.page !== serving.page) return state;
+      return { ...state, serving: { ...serving, page: serving.page + 1 } };
     }
 
     case 'REVEAL_SECRET':

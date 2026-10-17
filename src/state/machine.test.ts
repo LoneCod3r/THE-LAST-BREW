@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { PathId } from '../data/paths';
-import { createInitialState, gameReducer, type GameAction, type GameState } from './machine';
+import { createInitialState, gameReducer, offersEnough, type GameAction, type GameState } from './machine';
 import { emptyProgress, parseProgress } from './progress';
 
 const run = (state: GameState, ...actions: GameAction[]) => actions.reduce(gameReducer, state);
@@ -20,10 +20,12 @@ const drink = (state: GameState, id: PathId) => {
   return run(s, { type: 'DRINK_COMPLETE', run: s.brewRun });
 };
 
-/** Press MORE COFFEE until the machine is fresh again (or the secret starts). */
+/** Press the key (MORE COFFEE, or Enough? when it reads so) until the machine is fresh again (or the secret starts). */
 function finish(state: GameState): GameState {
   let s = state;
-  while (s.screen === 'PUZZLE_SOLVED' && s.serving && !s.serving.unveiling) s = run(s, { type: 'MORE_COFFEE', page: s.serving.page });
+  while (s.screen === 'PUZZLE_SOLVED' && s.serving && !s.serving.unveiling) {
+    s = run(s, { type: offersEnough(s) ? 'ENOUGH' : 'MORE_COFFEE', page: s.serving.page });
+  }
   return s;
 }
 
@@ -276,14 +278,16 @@ describe('the Secret Blend', () => {
     expect(s.progress.eggs).toContain('coffeeRitual');
   });
 
-  it('follows the third message (and the ritual), plays once, then reveals', () => {
+  it('follows the third message, the ritual and the QR code, plays once, then reveals', () => {
     let s = allThree();
-    expect(s.serving?.pages).toEqual(['message', 'ritual']);
+    expect(s.serving?.pages).toEqual(['message', 'ritual', 'qr']);
     s = run(s, { type: 'MORE_COFFEE', page: 0 });
     expect(s.serving?.unveiling).toBe(false);
-    s = run(s, { type: 'MORE_COFFEE', page: 1 });
+    s = run(s, { type: 'ENOUGH', page: 1 });
+    expect(s.serving?.unveiling).toBe(false);
+    s = run(s, { type: 'MORE_COFFEE', page: 2 });
     expect(s.serving?.unveiling).toBe(true);
-    expect(run(s, { type: 'MORE_COFFEE', page: 1 })).toBe(s);
+    expect(run(s, { type: 'MORE_COFFEE', page: 2 })).toBe(s);
     s = run(s, { type: 'REVEAL_SECRET' });
     expect(s.screen).toBe('SECRET_BLEND');
     expect(s.secretFull).toBe(true);
@@ -363,5 +367,115 @@ describe('sessions: progress lasts until the page is reloaded', () => {
     s = finish(s);
     expect(s.serving?.unveiling).toBe(true);
     expect(run(s, { type: 'REVEAL_SECRET' }).secretFull).toBe(true);
+  });
+});
+
+describe('Enough? and the QR code', () => {
+  /** Two coffees finished; the third is solved, brewed and picked up: the full set is drunk. */
+  const third = () => {
+    let s = finish(drink(createInitialState(), 'key'));
+    s = finish(drink(s, 'mind'));
+    return drink(s, 'void');
+  };
+  const enough = (s: GameState): GameAction => ({ type: 'ENOUGH', page: s.serving?.page ?? -1 });
+  const more = (s: GameState): GameAction => ({ type: 'MORE_COFFEE', page: s.serving?.page ?? -1 });
+
+  it('the first two coffees are unchanged: MORE COFFEE only, no code', () => {
+    let s = drink(createInitialState(), 'key');
+    expect(s.serving?.pages).toEqual(['message']);
+    expect(offersEnough(s)).toBe(false);
+    expect(run(s, enough(s))).toBe(s);
+    s = finish(s);
+    s = drink(s, 'mind');
+    expect(s.serving?.pages).toEqual(['message']);
+    expect(offersEnough(s)).toBe(false);
+    expect(run(s, enough(s))).toBe(s);
+    expect(run(s, more(s)).screen).toBe('PATH_SELECTION');
+  });
+
+  it('never appears before the full set: three coffees of two puzzles are not enough', () => {
+    let s = finish(drink(createInitialState(), 'key'));
+    s = finish(drink(s, 'mind'));
+    s = drink(s, 'key');
+    expect(s.progress.coffees).toBe(3);
+    expect(s.serving?.pages).toEqual(['message', 'ritual']);
+    for (; s.screen === 'PUZZLE_SOLVED'; s = run(s, more(s))) expect(offersEnough(s)).toBe(false);
+    // Solved but not yet drunk is not enough either.
+    s = brew(s, 'void');
+    expect(offersEnough(s)).toBe(false);
+    expect(run(s, { type: 'ENOUGH', page: 0 })).toBe(s);
+  });
+
+  it('after the third coffee the key reads Enough? on the last page only, and MORE COFFEE cannot skip the code', () => {
+    let s = third();
+    expect(s.serving?.pages).toEqual(['message', 'ritual', 'qr']);
+    expect(offersEnough(s)).toBe(false);
+    expect(run(s, enough(s))).toBe(s);
+    s = run(s, more(s));
+    expect(s.serving?.page).toBe(1);
+    expect(offersEnough(s)).toBe(true);
+    // MORE COFFEE is refused while the key reads Enough?: no skipping straight to the Secret Blend.
+    expect(run(s, more(s))).toBe(s);
+    expect(run(s, { type: 'REVEAL_SECRET' })).toBe(s);
+  });
+
+  it('Enough? reveals the code once; a double press, keyboard repeat or stale press changes nothing', () => {
+    const s = run(third(), { type: 'MORE_COFFEE', page: 0 });
+    const shown = run(s, { type: 'ENOUGH', page: 1 });
+    expect(shown.serving).toEqual({ pages: ['message', 'ritual', 'qr'], page: 2, unveiling: false });
+    expect(offersEnough(shown)).toBe(false);
+    // The second press of a double click (or a repeated Enter/Space) carries the old page.
+    expect(run(shown, { type: 'ENOUGH', page: 1 })).toBe(shown);
+    expect(run(shown, { type: 'ENOUGH', page: 2 })).toBe(shown);
+    // A stale MORE COFFEE from the page before the code does nothing either.
+    expect(run(shown, { type: 'MORE_COFFEE', page: 1 })).toBe(shown);
+    expect(shown.progress).toBe(s.progress);
+  });
+
+  it('the full sequence: Enough?, the code, MORE COFFEE, then the Secret Blend exactly once', () => {
+    let s = third();
+    s = run(s, more(s));
+    s = run(s, enough(s));
+    expect(s.serving?.pages[s.serving.page]).toBe('qr');
+    const unveil = run(s, more(s));
+    expect(unveil.serving?.unveiling).toBe(true);
+    // Double press of MORE COFFEE under the code: the sequence starts once and nothing is skipped.
+    expect(run(unveil, more(s))).toBe(unveil);
+    expect(run(unveil, enough(s))).toBe(unveil);
+    s = run(unveil, { type: 'REVEAL_SECRET' });
+    expect(s).toMatchObject({ screen: 'SECRET_BLEND', secretFull: true });
+    expect(s.progress.finalSeen).toBe(true);
+    expect(run(s, { type: 'REVEAL_SECRET' })).toBe(s);
+    s = run(s, { type: 'CLOSE_SECRET' });
+    expect(s).toMatchObject({ screen: 'PATH_SELECTION', serving: null });
+  });
+
+  it('stays available for every later coffee in the session, then leads back to a fresh machine', () => {
+    let s = run(finish(third()), { type: 'REVEAL_SECRET' }, { type: 'CLOSE_SECRET' });
+    s = drink(s, 'key');
+    expect(s.serving?.pages).toEqual(['message', 'qr']);
+    expect(offersEnough(s)).toBe(true);
+    expect(run(s, more(s))).toBe(s);
+    s = run(s, enough(s));
+    s = run(s, more(s));
+    // The Secret Blend has been seen, so it is not replayed; the seal still opens it.
+    expect(s).toMatchObject({ screen: 'PATH_SELECTION', serving: null, sugar: 0, selection: null });
+    expect(run(s, { type: 'OPEN_SECRET' })).toMatchObject({ screen: 'SECRET_BLEND', secretFull: false });
+  });
+
+  it('is part of the session: after a page load it must be earned again', () => {
+    const fresh = drink(createInitialState(), 'void');
+    expect(fresh.serving?.pages).toEqual(['message']);
+    expect(offersEnough(fresh)).toBe(false);
+  });
+
+  it('ENOUGH does nothing anywhere else', () => {
+    const intro = createInitialState();
+    expect(run(intro, { type: 'ENOUGH', page: 0 })).toBe(intro);
+    const machine = run(intro, { type: 'OPEN_ARCHIVE' });
+    expect(run(machine, { type: 'ENOUGH', page: 0 })).toBe(machine);
+    const unveiling = finish(third());
+    expect(unveiling.serving?.unveiling).toBe(true);
+    expect(run(unveiling, { type: 'ENOUGH', page: 2 })).toBe(unveiling);
   });
 });

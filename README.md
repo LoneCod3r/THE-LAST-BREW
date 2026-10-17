@@ -88,6 +88,9 @@ Versions are those in `package-lock.json`.
 | [TypeScript](https://www.typescriptlang.org) | 7.0 | Strict typing (`tsc --noEmit` is the type check) |
 | [Vite](https://vite.dev) + `@vitejs/plugin-react` | 8.3 / 6.1 | Dev server, hot reload, production build |
 | [Vitest](https://vitest.dev) | 5.0 | Unit tests (Node environment) |
+| `qrcode-generator` | 2.0 | Encodes the hidden QR code (drawn as SVG by the app); no dependencies |
+| [three.js](https://threejs.org) (+ `@types/three`, dev only) | 0.186 | The 3D cup on the `last-drop/` page only; loaded on demand there, never by the game |
+| `jsqr` (dev only) | 1.4 | Decodes that QR code in the tests, to prove it reads back as the real URL |
 | `@fontsource/ibm-plex-sans-condensed`, `ibm-plex-sans`, `ibm-plex-mono` | 5.3 | Self-hosted fonts: titles, interface and case files, machine readouts and codes |
 | `lucide-react` | 1.58 | Declared in `package.json`, but not imported by the current source |
 
@@ -115,6 +118,15 @@ npm run dev        # starts the dev server
 
 Open the URL Vite prints, by default **http://localhost:5173/**.
 
+To try the game from a phone on the same network (for example, to scan its QR code), run
+`npm run dev -- --host` and open the **Network** URL Vite prints, not `localhost`.
+
+The build has two pages: the game (`index.html`) and a separate page at `last-drop/`
+(`last-drop/index.html`). Any static host serves both as they are, with no rewrite rules. The QR code
+leads to `last-drop/` under whatever address the game was opened at, including Vite's `base` path
+when the site is served from a subfolder. If the game is reached through a different public address,
+set **`VITE_PUBLIC_URL`** at build time to that full address (e.g. `https://example.com/game/`).
+
 ### Available scripts
 
 | Command | What it does |
@@ -132,10 +144,11 @@ There is no lint script in this project.
 ```
 .
 ├── index.html                 App shell (title, meta, favicon)
+├── last-drop/index.html       A second page, reached through the QR code
 ├── public/favicon.svg
 ├── Coffee_machine.webp        Original machine photo (kept for reference; not loaded by the app)
 ├── hand.png                   Original hand artwork (kept for reference; not loaded by the app)
-├── vite.config.ts             Vite + Vitest configuration
+├── vite.config.ts             Vite + Vitest configuration; both pages as build inputs
 ├── tsconfig.json
 └── src/
     ├── main.tsx               Entry: fonts, stylesheets, <App /> in StrictMode
@@ -151,12 +164,18 @@ There is no lint script in this project.
     │   ├── rewards.ts         All post-coffee, Easter egg and final-reward copy
     │   ├── machine.ts         Photo geometry: screen, buttons, hand targets, cup, casing parts
     │   └── brew.ts            Brewing phases
+    ├── secret/                The QR code: its destination (destination.ts), encoding (qr.ts),
+    │   │                      and the last-drop page (main.tsx, SecretPage.tsx)
+    │   └── cup3d/             The 3D cup: profile.ts (shape traced from cup-hd.png), cupModel.ts
+    │                          (meshes), views.ts (view rules), camera.ts, CupScene.ts (rendering,
+    │                          input), InteractiveCup.tsx (keyboard, live region, fallback)
     ├── logic/                 Puzzle solvers: switch statements, code clues, possible-worlds hats
     ├── hooks/                 useHand (hand choreography), useReducedMotion
     ├── components/            IntroScreen, MachineSelect, PuzzleScreen, PuzzleInput, MachineScreen,
     │                          VendingMachine, Cup, CartoonHand, HandLayer, MoreCoffeeKey,
-    │                          MachineEggs, SecretBlend, SugarEffects, Glyphs, ScanlineOverlay
-    ├── styles/                base.css (tokens, CRT overlay), screens.css, machine.css, vending.css
+    │                          MachineEggs, SecretBlend, QrReveal, SugarEffects, Glyphs, ScanlineOverlay
+    ├── styles/                base.css (tokens, CRT overlay), screens.css, machine.css, vending.css,
+    │                          secret.css (the last-drop page)
     └── assets/                machine-empty.webp (the photo the app loads), machine-clean.webp
                                (its source), cup-hd.png, hand-clean.png
 ```
@@ -192,18 +211,24 @@ memory and is never written to storage, so **reloading the page starts a fresh g
 
 ## Testing and quality assurance
 
-The repository contains **68 unit tests in 6 files**, run with `npm test`:
+The repository contains **112 unit tests in 12 files**, run with `npm test`:
 
 | File | Covers |
 | --- | --- |
 | `src/logic/puzzles.test.ts` | Each puzzle has exactly one solution (truth tables; all 1000 codes; all hat worlds); answer normalisation and validation |
-| `src/state/machine.test.ts` | State-machine transitions: no brewing without a correct answer, sugar, drafts, MORE COFFEE paging and double activation, drinking counted once, the eggs, the Coffee Ritual and the Secret Blend (first time, revisit); progress kept through every screen change, and a fresh start that requires every reward to be earned again |
+| `src/state/machine.test.ts` | State-machine transitions: no brewing without a correct answer, sugar, drafts, MORE COFFEE paging and double activation, drinking counted once, the eggs, the Coffee Ritual and the Secret Blend (first time, revisit); Enough? and the QR code (never before the full set, never skipped, double presses counted once, the Secret Blend still following exactly once); progress kept through every screen change, and a fresh start that requires every reward to be earned again |
 | `src/state/progress.test.ts` | Page load removes only the old save key (other storage untouched, broken storage tolerated); malformed or tampered records; the unlock rules |
 | `src/state/eggs.test.ts` | Tap and keypress timing windows; which key events count for Night Shift |
 | `src/data/machine.test.ts` | Photo geometry: buttons inside the screen, hand alignment, MORE COFFEE clearance |
 | `src/components/MachineSelect.test.ts` | Renders the selection screen with the props the app passes, for empty, missing and malformed progress records (regression test) |
+| `src/components/QrReveal.test.ts` | The key's labels; the QR reveal links to the real page in a new tab, has no caption, and holds MORE COFFEE back at first |
+| `src/secret/destination.test.ts` | The QR destination: served origin, base path, network address in development, `VITE_PUBLIC_URL`, never a hardcoded localhost |
+| `src/secret/qr.test.ts` | Round trip: the code (and the SVG path actually drawn) decodes with `jsqr` to exactly the secret page URL |
+| `src/secret/cup3d/profile.test.ts` | The cup's shape against the outline traced from `cup-hd.png`: proportions, wall, lip, coffee level, the handle loop |
+| `src/secret/cup3d/views.test.ts` | Looking in and out, rim steps (quarter turns, underside, round again), drag limits, never stuck, keys, reduced motion |
+| `src/secret/cup3d/cupModel.test.ts` | Rays from each camera view through the real model: coffee seen from inside, the base from below, the handle when turned; plain coffee; triangle budget |
 
-All three checks pass: `npm run typecheck` (clean), `npm test` (68/68), and `npm run build`.
+All three checks pass: `npm run typecheck` (clean), `npm test` (112/112), and `npm run build`.
 
 During development the app was also checked in a real browser (Chrome via Playwright):
 
@@ -253,7 +278,7 @@ Those browser scripts are not part of this repository.
 <details>
 <summary><strong>Show the solutions</strong></summary>
 
-Each egg is awarded once and saved. Its message appears once, briefly, on the machine's display, and
+Each egg is awarded once per session. Its message appears once, briefly, on the machine's display, and
 never blocks a click.
 
 | Egg | How to find it |
@@ -262,7 +287,25 @@ never blocks a click.
 | **Night Shift** | On the selection screen, while the machine is idle, press **N** three times within 2 s. Not while typing an answer or with a control focused; modifiers and held-key repeats are ignored. *ARCHIVE ENTRY 07.* |
 | **Missing Bean** | A single coffee bean rests on the right-hand bean-hopper lid (accessible name "Coffee bean"). *"A good eye makes a good barista."* |
 | **Coffee Ritual** | Finish (pick up) **three coffees** of any kind in one session. The next display page reads *"Ah. A regular."* with a REGULAR CUSTOMER badge. |
-| **The Secret Blend** | Solve all three puzzles and pick up each one's coffee (the eggs are not required). After the message that completes the set, MORE COFFEE starts a short sequence on the machine, then the final screen. |
+| **The Secret Blend** | Solve all three puzzles and pick up each one's coffee (the eggs are not required). After the message that completes the set, the key reads **Enough?** (see below); after that, MORE COFFEE starts a short sequence on the machine, then the final screen. |
+
+**Enough?** Once every puzzle has been solved and its coffee picked up, the last page after that
+coffee (and after every later coffee in the session) shows **Enough?** on the key instead of MORE
+COFFEE. Nothing happens until it is pressed. Then the machine goes dark and a QR code surfaces in
+front of it, with no caption. The code leads to the separate page at `last-drop/`, and is also a link
+(opening in a new tab) for anyone who cannot scan their own screen. After a moment, MORE COFFEE
+returns beneath the code and the machine carries on as before: into the Secret Blend the first time,
+otherwise back to a fresh machine.
+
+**The `last-drop/` page** shows the game's red cup in 3D, rebuilt from the cup artwork
+(`src/assets/cup-hd.png`): its outline is traced from the picture row by row, and its handle, rim and
+faint middle line are measured from it. Clicking the middle glides the camera down into the cup, onto
+the coffee's surface (clicking again comes back out). Clicking the rim or handle turns it by a step:
+three quarter turns, then the underside, then round again. Dragging (mouse or touch) turns it freely.
+Clicking the body or underside always leads back inside. With the keyboard: Tab to the cup, arrows to
+turn, Enter or Space to look in or out, R for the rim step, Home to look inside, Escape for the first
+view. The coffee is plain and an empty layer on it is reserved for the puzzle; the quote space
+beneath the cup is empty too. Neither is written yet.
 
 **The final screen** shows:
 
@@ -288,6 +331,16 @@ it directly. After a page reload it has to be earned again.
   reload the page to see them again.
 - **Modern browsers only.** The layout needs container queries, `:has()` and `inert`; older browsers are
   not supported.
+- **The secret page is public.** `last-drop/` is an ordinary static page: anyone who reads the
+  source or guesses the address can open it without playing. A static site cannot hide it.
+- **QR size on the smallest screens.** At 568×320 the code is about 170 px wide (about 4.6 px per
+  module). It decodes, but scanning from a small phone screen needs a steady hand.
+- **The 3D cup is partly inferred.** The artwork shows one side from about 12° above. The outline,
+  rim, handle and colours come from it; the back, the inside below the coffee and the underside do
+  not appear there, so they are kept plain (red glaze, a simple foot ring, no markings).
+- **3D needs WebGL.** Without it (or if three.js fails to load) the page shows the game's own picture
+  of the cup instead, which cannot be turned. three.js adds about 140 KB (gzipped) to that page only,
+  loaded after the page appears; the build notes that this one chunk is over 500 KB before compression.
 - **Tooling gaps.** There is no lint script, the browser tests are not in the repository, and
   `lucide-react` is an unused dependency.
 

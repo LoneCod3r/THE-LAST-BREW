@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { ArchivePath } from '../data/paths';
 import { CASING, HAND_AWAY, SUGAR_MAX, photoPos } from '../data/machine';
 import type { BrewPhase } from '../data/brew';
@@ -8,6 +8,8 @@ import { useHand } from '../hooks/useHand';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { CasingDetails, ScreenNotice } from './MachineEggs';
 import { MoreCoffeeKey } from './MoreCoffeeKey';
+import { QrReveal } from './QrReveal';
+import { currentSecretPageUrl } from '../secret/destination';
 import { VendingMachine } from './VendingMachine';
 
 /** Hold ACCESS GRANTED on the machine's screen this long before it powers up. */
@@ -124,7 +126,13 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
   }, [ready, brewRun]);
 
   const unveiling = serving?.unveiling ?? false;
-  const keyShown = ready && serving !== null && !unveiling;
+  const page = serving && ready ? serving.pages[serving.page] : null;
+  /** The QR code is on view: the casing key steps aside; the reveal has its own MORE COFFEE. */
+  const qrShown = page === 'qr' && !unveiling;
+  /** The full set has been drunk and the next page is the code: the key reads Enough?. */
+  const enough = !!serving && !unveiling && serving.pages[serving.page + 1] === 'qr';
+  const keyShown = ready && serving !== null && !unveiling && !qrShown;
+  const secretUrl = useMemo(() => (qrShown ? currentSecretPageUrl() : ''), [qrShown]);
   const keyRef = useRef<HTMLButtonElement>(null);
 
   // The key takes focus only if focus would otherwise be lost (it was on the cup, which is gone).
@@ -145,7 +153,6 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
   }, [unveiling, reduced]);
 
   const cupStage = ({ none: 'tray', lift: 'lift', held: 'held', pickup: 'picked', ready: 'gone' } as const)[handoff];
-  const page = serving && ready ? serving.pages[serving.page] : null;
   const message = POST_COFFEE[path.id];
 
   let after = null;
@@ -163,6 +170,9 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
         <p className="vmui__msg-body">{message.body}</p>
       </div>
     );
+  } else if (page === 'qr') {
+    // The display goes quiet while the code is on view; nothing is announced.
+    after = <div className="vmui__quiet" key="qr" aria-hidden="true" />;
   } else if (page === 'ritual') {
     after = (
       <div className="vmui__msg vmui__msg--ritual" key="ritual">
@@ -208,7 +218,7 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
       tabIndex={-1}
       data-screen-focus
     >
-      <div className="apparatus__machine machine-slot">
+      <div className="apparatus__machine machine-slot" inert={qrShown || undefined}>
         <VendingMachine
           key={brewRun}
           screen={display}
@@ -216,24 +226,28 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
           dispense={{ phase, roast: path.roast, pourMs, sugar: record.sugar }}
           cupStage={cupStage}
           onPickup={() => setHandoff((h) => (h === 'held' ? 'pickup' : h))}
-          mood={[unveiling && 'is-unveiling', notice && `is-notice-${notice.id}`].filter(Boolean).join(' ') || undefined}
+          mood={[unveiling && 'is-unveiling', qrShown && 'is-quiet', notice && `is-notice-${notice.id}`].filter(Boolean).join(' ') || undefined}
           controls={
             <>
               <CasingDetails
                 onEgg={(egg) => dispatch({ type: 'FIND_EGG', egg })}
-                disabled={handoff === 'lift' || handoff === 'held' || handoff === 'pickup' || unveiling}
+                disabled={handoff === 'lift' || handoff === 'held' || handoff === 'pickup' || unveiling || qrShown}
               />
               <MoreCoffeeKey
                 ref={keyRef}
                 shown={keyShown}
                 className="more-key--casing"
                 style={photoPos(CASING.moreCoffee)}
-                onPress={() => serving && dispatch({ type: 'MORE_COFFEE', page: serving.page })}
+                label={enough ? 'Enough?' : undefined}
+                onPress={() => serving && dispatch({ type: enough ? 'ENOUGH' : 'MORE_COFFEE', page: serving.page })}
               />
             </>
           }
         />
       </div>
+      {qrShown && serving && (
+        <QrReveal href={secretUrl} onContinue={() => dispatch({ type: 'MORE_COFFEE', page: serving.page })} />
+      )}
     </section>
   );
 }

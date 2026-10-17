@@ -8,6 +8,8 @@ interface MoreCoffeeKeyProps {
   /** Hidden keys are out of the tab order and the accessibility tree. */
   shown: boolean;
   onPress: () => void;
+  /** The key's cap; the same key reads Enough? once the full set has been drunk. */
+  label?: string;
   className?: string;
   style?: CSSProperties;
 }
@@ -17,7 +19,7 @@ interface MoreCoffeeKeyProps {
  * touch, Enter and Space each activate it once; the key also stays visibly down
  * while it is held, by pointer or keyboard.
  */
-export function MoreCoffeeKey({ ref, shown, onPress, className = '', style }: MoreCoffeeKeyProps) {
+export function MoreCoffeeKey({ ref, shown, onPress, label = 'MORE COFFEE', className = '', style }: MoreCoffeeKeyProps) {
   const [down, setDown] = useState(false);
   const [tap, setTap] = useState(false);
   const tapTimer = useRef<number | undefined>(undefined);
@@ -46,6 +48,8 @@ export function MoreCoffeeKey({ ref, shown, onPress, className = '', style }: Mo
       onKeyUp={release}
       onBlur={release}
       onClick={() => {
+        // A key that is fading out (or not yet in) is not pressable.
+        if (!shown) return;
         const now = performance.now();
         if (now - lastPress.current < KEY_LOCKOUT_MS) return;
         lastPress.current = now;
@@ -56,7 +60,7 @@ export function MoreCoffeeKey({ ref, shown, onPress, className = '', style }: Mo
         onPress();
       }}
     >
-      <span className="more-key__cap">MORE COFFEE</span>
+      <span className="more-key__cap">{label}</span>
     </button>
   );
 }
