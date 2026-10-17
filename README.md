@@ -166,9 +166,12 @@ There is no lint script in this project.
     │   └── brew.ts            Brewing phases
     ├── secret/                The QR code: its destination (destination.ts), encoding (qr.ts),
     │   │                      and the last-drop page (main.tsx, SecretPage.tsx)
-    │   └── cup3d/             The 3D cup: profile.ts (shape traced from cup-hd.png), cupModel.ts
-    │                          (meshes), views.ts (view rules), camera.ts, CupScene.ts (rendering,
-    │                          input), InteractiveCup.tsx (keyboard, live region, fallback)
+    │   ├── cup3d/             The 3D cup: profile.ts (shape traced from cup-hd.png), cupModel.ts
+    │   │                      (meshes), views.ts (view rules), camera.ts, CupScene.ts (rendering,
+    │   │                      input), grounds.ts (what the coffee leaves behind), InteractiveCup.tsx
+    │   │                      (keyboard, live region, the time field, fallback)
+    │   └── reading/           The puzzle in the grounds: puzzle.ts (the clock model and its answer),
+    │                          state.ts (sips, clues seen), copy.ts (the archive entry and spoken lines)
     ├── logic/                 Puzzle solvers: switch statements, code clues, possible-worlds hats
     ├── hooks/                 useHand (hand choreography), useReducedMotion
     ├── components/            IntroScreen, MachineSelect, PuzzleScreen, PuzzleInput, MachineScreen,
@@ -211,7 +214,7 @@ memory and is never written to storage, so **reloading the page starts a fresh g
 
 ## Testing and quality assurance
 
-The repository contains **112 unit tests in 12 files**, run with `npm test`:
+The repository contains **139 unit tests in 15 files**, run with `npm test`:
 
 | File | Covers |
 | --- | --- |
@@ -227,8 +230,11 @@ The repository contains **112 unit tests in 12 files**, run with `npm test`:
 | `src/secret/cup3d/profile.test.ts` | The cup's shape against the outline traced from `cup-hd.png`: proportions, wall, lip, coffee level, the handle loop |
 | `src/secret/cup3d/views.test.ts` | Looking in and out, rim steps (quarter turns, underside, round again), drag limits, never stuck, keys, reduced motion |
 | `src/secret/cup3d/cupModel.test.ts` | Rays from each camera view through the real model: coffee seen from inside, the base from below, the handle when turned; plain coffee; triangle budget |
+| `src/secret/cup3d/grounds.test.ts` | The grounds as drawn and as seen: the trail ends on the twelve mark under the handle; at every turn the hands stand 120° and 220° clockwise from it; the word reads left to right across the opening; the stamp reads upright from below; the liner covers the handle's ends; texture mappings |
+| `src/secret/reading/puzzle.test.ts` | The reading is fair: of all 48 ways to read the clock only 7:20 (and its anticlockwise mirror) is consistent, and the word is what orients it; accepted and refused times |
+| `src/secret/reading/state.test.ts` | Sips, clues seen in any order, the stamp opening only after both, and both clues reachable with the ordinary controls |
 
-All three checks pass: `npm run typecheck` (clean), `npm test` (112/112), and `npm run build`.
+All three checks pass: `npm run typecheck` (clean), `npm test` (139/139), and `npm run build`.
 
 During development the app was also checked in a real browser (Chrome via Playwright):
 
@@ -304,8 +310,24 @@ the coffee's surface (clicking again comes back out). Clicking the rim or handle
 three quarter turns, then the underside, then round again. Dragging (mouse or touch) turns it freely.
 Clicking the body or underside always leads back inside. With the keyboard: Tab to the cup, arrows to
 turn, Enter or Space to look in or out, R for the rim step, Home to look inside, Escape for the first
-view. The coffee is plain and an empty layer on it is reserved for the puzzle; the quote space
-beneath the cup is empty too. Neither is written yet.
+view. The quote space beneath the cup is empty; it is not written yet.
+
+**The reading.** Hold still on the coffee (about half a second), or press **D** with the cup focused,
+to take a sip; three sips empty it. A press that moves first is a drag, as before, and a press that
+has sipped neither turns nor clicks. The cup stays. Once it is empty, the grounds show:
+
+- on the bottom, a **clock with no numbers**: twelve equal marks, a short thick hand and a long thin one;
+- on the inside wall above the handle, **TW▒LVE**: a drip hides the first E and runs on down the wall
+  and across the bottom, ending exactly on one mark. That mark is twelve;
+- under the base, pressed in: **`_:__`**, a time with one hour digit and two minute digits.
+
+Read clockwise from twelve: the long hand is on the fourth mark (20 minutes), the short hand a third
+of the way past the seventh (7). The answer is **7:20**. Once both clues have been in view (the
+clock from above, the word across the opening with the handle behind; in any order), turning the
+cup over lets the time be written into the stamp. It is a real text field over the base that follows
+it as the cup turns. A wrong time gets only *The grounds disagree.* The right one presses 7:20 into
+the base and opens **ARCHIVE ENTRY 12, THE LAST DROP** below the cup. Screen readers hear the
+same clues described when the view shows them. Nothing is kept: a reload refills the cup.
 
 **The final screen** shows:
 
@@ -337,7 +359,11 @@ it directly. After a page reload it has to be earned again.
   module). It decodes, but scanning from a small phone screen needs a steady hand.
 - **The 3D cup is partly inferred.** The artwork shows one side from about 12° above. The outline,
   rim, handle and colours come from it; the back, the inside below the coffee and the underside do
-  not appear there, so they are kept plain (red glaze, a simple foot ring, no markings).
+  not appear there, so they are kept plain (red glaze, a simple foot ring, no markings until the
+  cup has been drunk).
+- **The reading needs WebGL.** The still picture shown without it cannot be drunk, so the puzzle
+  cannot be played there. The answer can also be read from the page's source, like everything else
+  on this static page.
 - **3D needs WebGL.** Without it (or if three.js fails to load) the page shows the game's own picture
   of the cup instead, which cannot be turned. three.js adds about 140 KB (gzipped) to that page only,
   loaded after the page appears; the build notes that this one chunk is over 500 KB before compression.
