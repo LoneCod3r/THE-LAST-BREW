@@ -46,11 +46,11 @@ export const COFFEE_RITUAL = { title: 'Ah. A regular.', badge: 'REGULAR CUSTOMER
 /** The final reward: every puzzle solved and every coffee drunk. */
 export const SECRET_BLEND = {
   title: 'THE SECRET BLEND',
-  lead: 'Three puzzles. Three coffees. One final secret.',
-  entryLabel: 'ARCHIVE ENTRY 00',
+  lead: 'Three puzzles. Three coffees. One secret buried beneath them all.',
   entry: [
-    'C. 042. White.',
-    'Three locks, three answers, three cups, and one machine that was here before any of them. It never guarded the archive. It was the archive, keeping a record of everyone patient enough to think before they drank.',
+    'Before the first question was asked, the machine was already waiting. Three locks. Three cups. Three chances to see what others might miss.',
+    'Somewhere between the bitter and the forgotten, something was left behind. The machine was never built to give answers. It was built to preserve what time could not erase.',
+    'Every cup leaves a trace. Every trace hides a question. And some questions reveal themselves only to those patient enough to look beyond what is seen. The secret was never lost. It was waiting to be found.',
   ],
   achievement: 'MASTER OF THE ARCHIVE',
 } as const;

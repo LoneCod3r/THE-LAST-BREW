@@ -44,9 +44,6 @@ export function PuzzleInput({ spec, feedback, value, onChange, onSubmit }: Puzzl
                 checked={value === option.value}
                 onChange={() => onChange(option.value)}
               />
-              <span className="plate__housing" aria-hidden="true">
-                <span className="plate__lever" />
-              </span>
               <span className="plate__label">{option.label}</span>
             </label>
           ))}

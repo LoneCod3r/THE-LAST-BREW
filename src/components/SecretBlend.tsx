@@ -1,4 +1,3 @@
-import { PATHS } from '../data/paths';
 import { SECRET_BLEND } from '../data/rewards';
 import { MoreCoffeeKey } from './MoreCoffeeKey';
 
@@ -8,7 +7,7 @@ interface SecretBlendProps {
   onContinue: () => void;
 }
 
-/** The final reward: the three roasts become one, and the archive's last entry. */
+/** The final reward: one cup, and the secret beneath it. */
 export function SecretBlend({ full, onContinue }: SecretBlendProps) {
   return (
     <section
@@ -17,19 +16,14 @@ export function SecretBlend({ full, onContinue }: SecretBlendProps) {
       tabIndex={-1}
       data-screen-focus
     >
-      <div className="secret__blend" aria-hidden="true">
-        {PATHS.map((p, i) => (
-          <i key={p.id} style={{ background: p.roast, ['--i' as string]: i }} />
-        ))}
+      <div className="secret__cup" aria-hidden="true">
+        ☕
       </div>
       <h1 id="secret-title" className="secret__title">
         {SECRET_BLEND.title}
       </h1>
       <p className="secret__lead">{SECRET_BLEND.lead}</p>
-      <article className="secret__entry" aria-labelledby="secret-entry">
-        <h2 id="secret-entry" className="secret__label">
-          {SECRET_BLEND.entryLabel}
-        </h2>
+      <article className="secret__entry">
         {SECRET_BLEND.entry.map((line) => (
           <p key={line}>{line}</p>
         ))}
