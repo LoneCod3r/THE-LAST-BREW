@@ -5,6 +5,11 @@
   height: 100%;
 }
 
+/* The title screen is shown clean: no CRT scanlines, grain or vignette over it. */
+.stage--intro ~ .crt {
+  display: none;
+}
+
 .landing__line {
   max-width: 11em;
   font-family: var(--display);

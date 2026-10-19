@@ -65,9 +65,17 @@
   inset: 0;
   z-index: 2;
   pointer-events: none;
-  background:
-    radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.45) 100%),
-    repeating-linear-gradient(180deg, transparent 0 2px, rgba(0, 0, 0, 0.12) 3px, transparent 4px);
+  /* The photo's vignette only: no scanlines over the machine. */
+  background: radial-gradient(ellipse at 50% 45%, transparent 55%, rgba(0, 0, 0, 0.45) 100%);
+}
+
+/* The machine screens (selection and every brewing stage) show the machine clean:
+   no CRT scanlines, grain or vignette over them. */
+.stage--path_selection ~ .crt,
+.stage--access_granted ~ .crt,
+.stage--brewing ~ .crt,
+.stage--puzzle_solved ~ .crt {
+  display: none;
 }
 
 .vm.is-working {
