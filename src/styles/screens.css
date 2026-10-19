@@ -170,6 +170,16 @@
   line-height: 1.55;
 }
 
+/* The question screens stay clean for reading: no CRT scanlines, grain or vignette over them
+   (the overlay is the stage's next sibling), and the card is plain paper, without texture. */
+.stage--puzzle ~ .crt {
+  display: none;
+}
+
+.dossier.paper {
+  background-image: none;
+}
+
 .dossier__text + .dossier__text {
   margin-top: 0.5em;
 }
