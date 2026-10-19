@@ -570,6 +570,12 @@
     repeating-linear-gradient(180deg, transparent 0 0.35cqw, rgba(0, 0, 0, 0.28) 0.45cqw, transparent 0.55cqw);
 }
 
+/* On the coffee-selection screen the glass keeps its glare but loses its lines, so none cross the
+   coffee keys and the sugar scale. (More specific than the old-engine copy of the rule above.) */
+.dispenser .vmui::after {
+  background: linear-gradient(115deg, rgba(255, 255, 255, 0.07), transparent 38%);
+}
+
 .vmui__btn,
 .vmui__start {
   position: absolute;
