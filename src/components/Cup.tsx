@@ -22,6 +22,9 @@ export type CupStage = 'tray' | 'lift' | 'held' | 'picked' | 'gone';
 
 /** Where the sugar cubes land in the cup, relative to its centre (photo px). */
 const CUBE_OFFSETS = [-10, 7, -2, 12, -15] as const;
+/** A sugar cube's side (photo px); its corner radius and outline scale with it. */
+const CUBE = 8;
+const CUBE_SCALE = CUBE / 5;
 
 const pct = (v: number, of: number) => `${(v / of) * 100}%`;
 
@@ -131,14 +134,14 @@ export function Cup({ sugar, target, stage, onPickup }: CupProps) {
           <rect
             key={i}
             className="vm__cube"
-            x={CUP.cx + CUBE_OFFSETS[i] - 2.5}
-            y={CUP.cy - 5}
-            width="5"
-            height="5"
-            rx="1"
+            x={CUP.cx + CUBE_OFFSETS[i] - CUBE / 2}
+            y={CUP.cy - CUBE}
+            width={CUBE}
+            height={CUBE}
+            rx={1 * CUBE_SCALE}
             fill="#f4efe2"
             stroke="#c9bfa6"
-            strokeWidth="0.6"
+            strokeWidth={0.6 * CUBE_SCALE}
             style={{ animationDelay: `${i * 170}ms` }}
           />
         ))}

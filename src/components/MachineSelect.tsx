@@ -23,9 +23,11 @@ export interface MachineSelectProps {
   onDismissNotice: (seq: number) => void;
   /** Only once the Secret Blend is unlocked. */
   onSecret?: () => void;
+  /** The ? disc (the Last Drop); likewise only once all three distinct coffees are drunk. */
+  onLastDrop?: () => void;
 }
 
-export function MachineSelect({ solved, selection, sugar, onSugar, onStart, notice, onEgg, onDismissNotice, onSecret }: MachineSelectProps) {
+export function MachineSelect({ solved, selection, sugar, onSugar, onStart, notice, onEgg, onDismissNotice, onSecret, onLastDrop }: MachineSelectProps) {
   const reduced = useReducedMotion();
   const hand = useHand();
   const fx = useSugarEffects();
@@ -186,7 +188,7 @@ export function MachineSelect({ solved, selection, sugar, onSugar, onStart, noti
             hand={hand}
             mood={notice ? `is-notice-${notice.id}` : undefined}
             around={<SugarParticles bursts={fx.bursts} />}
-            controls={<CasingDetails onEgg={onEgg} disabled={starting} onSecret={onSecret} />}
+            controls={<CasingDetails onEgg={onEgg} disabled={starting} onSecret={onSecret} onLastDrop={onLastDrop} />}
           />
         </div>
       </div>

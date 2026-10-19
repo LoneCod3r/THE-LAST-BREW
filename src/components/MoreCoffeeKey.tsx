@@ -1,5 +1,13 @@
 import { useEffect, useRef, useState, type CSSProperties, type Ref } from 'react';
 
+/** The key's caps once the full set has been drunk: two distinct steps, punctuation included. */
+export const ENOUGH_LABELS = {
+  /** Opens THE LAST DROP in a new tab. */
+  lastDrop: 'Enough?',
+  /** Carries on into THE SECRET BLEND. */
+  secretBlend: 'Enough.',
+} as const;
+
 /** A second activation this soon after the first is the same press (a double click or tap). */
 export const KEY_LOCKOUT_MS = 450;
 
@@ -8,7 +16,7 @@ interface MoreCoffeeKeyProps {
   /** Hidden keys are out of the tab order and the accessibility tree. */
   shown: boolean;
   onPress: () => void;
-  /** The key's cap; the same key reads Enough? once the full set has been drunk. */
+  /** The key's cap; the same key reads one of ENOUGH_LABELS once the full set has been drunk. */
   label?: string;
   className?: string;
   style?: CSSProperties;

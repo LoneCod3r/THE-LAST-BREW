@@ -102,8 +102,16 @@ export const CASING = {
   /** The MORE COFFEE key: centred on the opening, in the band. Its 44px touch box (93.6 photo px
    * at the smallest machine, 0.47 css px per photo px) still clears the screen glass from y 284. */
   moreCoffee: { x: OPENING_CX, y: 284, w: 172 },
-  /** The Secret Blend seal, left on the same band; only there once the final reward is unlocked. */
-  seal: { x: 136, y: 284 },
+  /** The Secret Blend seal, centred on the band's visible dark strip: under the housing's edge (y 258)
+   * and above the brew bay's lit rim at the right (y 284), so y 271; only there once the final reward
+   * is unlocked. Even at the smallest machine its 44px box (93.6 photo px) starts below the screen's
+   * bottom row of keys (y 222). */
+  seal: { x: 136, y: 271 },
+  /** The Last Drop disc, the seal's mirror on the band: level with it (y 271), and as far in from the
+   * band's right end (x 405) as the seal is from its left (x 104); only on the coffee-selection
+   * machine, once the final reward is unlocked. Its touch box (max(28px, 11cqw) wide, 53 photo px)
+   * spans x 346–400, inside the band. */
+  puzzle: { x: 373, y: 271 },
   /** The maker's badge, on the black front of the drip tray (y 560–585). */
   badge: { x: OPENING_CX, y: 573 },
   /** A stray bean on the right hopper lid (lid top edge at y ≈ 40). */

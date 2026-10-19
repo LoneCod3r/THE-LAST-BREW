@@ -6,6 +6,7 @@
  */
 import { useEffect, useRef, useState } from 'react';
 import { InteractiveCup } from './cup3d/InteractiveCup';
+import { returnToGame } from './destination';
 import { ARCHIVE } from './reading/copy';
 
 function Archive() {
@@ -33,7 +34,7 @@ export function SecretPage() {
         <figcaption className="drop__quote" data-slot="quote" />
       </figure>
       {solved && <Archive />}
-      <a className="drop__return" href="../">
+      <a className="drop__return" href="../" onClick={(e) => returnToGame(e, e.currentTarget.href)}>
         Return
       </a>
     </main>

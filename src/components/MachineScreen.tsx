@@ -1,15 +1,15 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ArchivePath } from '../data/paths';
 import { CASING, HAND_AWAY, SUGAR_MAX, photoPos } from '../data/machine';
 import type { BrewPhase } from '../data/brew';
-import { COFFEE_RITUAL, POST_COFFEE, SECRET_BLEND } from '../data/rewards';
-import type { GameAction, Notice, Screen, Serving, SolveRecord } from '../state/machine';
+import { COFFEE_RITUAL, MACHINE_SILENT, SECRET_BLEND, postCoffeeMessage } from '../data/rewards';
+import { casingControls, casingKey, setCompletedBefore, type GameAction, type Notice, type Screen, type Serving, type SolveRecord } from '../state/machine';
 import { useHand } from '../hooks/useHand';
 import { useReducedMotion } from '../hooks/useReducedMotion';
 import { CasingDetails, ScreenNotice } from './MachineEggs';
 import { MoreCoffeeKey } from './MoreCoffeeKey';
-import { QrReveal } from './QrReveal';
-import { currentSecretPageUrl } from '../secret/destination';
+import { EnoughKeys } from './EnoughKeys';
+import { openLastDrop } from '../secret/destination';
 import { VendingMachine } from './VendingMachine';
 
 /** Hold ACCESS GRANTED on the machine's screen this long before it powers up. */
@@ -58,11 +58,13 @@ interface MachineScreenProps {
   record: SolveRecord;
   /** Set once this brew's cup has been picked up. */
   serving: Serving | null;
+  /** Distinct coffees drunk this session; with the serving, picks the post-coffee message. */
+  drunk: number;
   notice: Notice | null;
   dispatch: (action: GameAction) => void;
 }
 
-export function MachineScreen({ path, screen, brewRun, record, serving, notice, dispatch }: MachineScreenProps) {
+export function MachineScreen({ path, screen, brewRun, record, serving, drunk, notice, dispatch }: MachineScreenProps) {
   const reduced = useReducedMotion();
   const scale = reduced ? REDUCED_SCALE : 1;
   const pourMs = Math.round(path.pourMs * scale);
@@ -127,12 +129,12 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
 
   const unveiling = serving?.unveiling ?? false;
   const page = serving && ready ? serving.pages[serving.page] : null;
-  /** The QR code is on view: the casing key steps aside; the reveal has its own MORE COFFEE. */
-  const qrShown = page === 'qr' && !unveiling;
-  /** The full set has been drunk and the next page is the code: the key reads Enough?. */
-  const enough = !!serving && !unveiling && serving.pages[serving.page + 1] === 'qr';
-  const keyShown = ready && serving !== null && !unveiling && !qrShown;
-  const secretUrl = useMemo(() => (qrShown ? currentSecretPageUrl() : ''), [qrShown]);
+  /** The 'qr' page: no code any more; the machine goes quiet and the key reads Enough. */
+  const quiet = page === 'qr' && !unveiling;
+  /** On the silent page, Enough? (the Last Drop) and Enough. (the Secret Blend) stand together. */
+  const key = serving ? casingKey(serving) : 'more';
+  const band = casingControls(serving, ready);
+  const { keyShown } = band;
   const keyRef = useRef<HTMLButtonElement>(null);
 
   // The key takes focus only if focus would otherwise be lost (it was on the cup, which is gone).
@@ -143,7 +145,7 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
     if (!active || active === document.body || active === section || active.closest('.vm__cup')) {
       keyRef.current?.focus({ preventScroll: true });
     }
-  }, [keyShown]);
+  }, [keyShown, key]);
 
   // Secret Blend: the machine plays its short sequence, then the archive entry opens.
   useEffect(() => {
@@ -153,7 +155,7 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
   }, [unveiling, reduced]);
 
   const cupStage = ({ none: 'tray', lift: 'lift', held: 'held', pickup: 'picked', ready: 'gone' } as const)[handoff];
-  const message = POST_COFFEE[path.id];
+  const message = postCoffeeMessage(drunk, serving !== null && setCompletedBefore(serving, drunk));
 
   let after = null;
   if (unveiling) {
@@ -171,8 +173,12 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
       </div>
     );
   } else if (page === 'qr') {
-    // The display goes quiet while the code is on view; nothing is announced.
-    after = <div className="vmui__quiet" key="qr" aria-hidden="true" />;
+    // The machine falls silent: one line, and the key reads Enough.
+    after = (
+      <div className="vmui__msg vmui__msg--silent" key="qr">
+        <p className="vmui__msg-title">{MACHINE_SILENT}</p>
+      </div>
+    );
   } else if (page === 'ritual') {
     after = (
       <div className="vmui__msg vmui__msg--ritual" key="ritual">
@@ -218,7 +224,7 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
       tabIndex={-1}
       data-screen-focus
     >
-      <div className="apparatus__machine machine-slot" inert={qrShown || undefined}>
+      <div className="apparatus__machine machine-slot">
         <VendingMachine
           key={brewRun}
           screen={display}
@@ -226,28 +232,33 @@ export function MachineScreen({ path, screen, brewRun, record, serving, notice, 
           dispense={{ phase, roast: path.roast, pourMs, sugar: record.sugar }}
           cupStage={cupStage}
           onPickup={() => setHandoff((h) => (h === 'held' ? 'pickup' : h))}
-          mood={[unveiling && 'is-unveiling', qrShown && 'is-quiet', notice && `is-notice-${notice.id}`].filter(Boolean).join(' ') || undefined}
+          mood={[unveiling && 'is-unveiling', quiet && 'is-quiet', notice && `is-notice-${notice.id}`].filter(Boolean).join(' ') || undefined}
           controls={
             <>
               <CasingDetails
                 onEgg={(egg) => dispatch({ type: 'FIND_EGG', egg })}
-                disabled={handoff === 'lift' || handoff === 'held' || handoff === 'pickup' || unveiling || qrShown}
+                disabled={handoff === 'lift' || handoff === 'held' || handoff === 'pickup' || unveiling || quiet}
               />
-              <MoreCoffeeKey
-                ref={keyRef}
-                shown={keyShown}
-                className="more-key--casing"
-                style={photoPos(CASING.moreCoffee)}
-                label={enough ? 'Enough?' : undefined}
-                onPress={() => serving && dispatch({ type: enough ? 'ENOUGH' : 'MORE_COFFEE', page: serving.page })}
-              />
+              {band.keys === 'enough' && serving ? (
+                <EnoughKeys
+                  ref={keyRef}
+                  style={photoPos(CASING.moreCoffee)}
+                  onLastDrop={openLastDrop}
+                  onSecretBlend={() => dispatch({ type: 'MORE_COFFEE', page: serving.page })}
+                />
+              ) : (
+                <MoreCoffeeKey
+                  ref={keyRef}
+                  shown={keyShown}
+                  className="more-key--casing"
+                  style={photoPos(CASING.moreCoffee)}
+                  onPress={() => serving && dispatch({ type: key === 'toSilent' ? 'ENOUGH' : 'MORE_COFFEE', page: serving.page })}
+                />
+              )}
             </>
           }
         />
       </div>
-      {qrShown && serving && (
-        <QrReveal href={secretUrl} onContinue={() => dispatch({ type: 'MORE_COFFEE', page: serving.page })} />
-      )}
     </section>
   );
 }

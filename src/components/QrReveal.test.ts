@@ -2,7 +2,7 @@ import { createElement } from 'react';
 import { renderToString } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { secretPageUrl } from '../secret/destination';
-import { MoreCoffeeKey } from './MoreCoffeeKey';
+import { ENOUGH_LABELS, MoreCoffeeKey } from './MoreCoffeeKey';
 import { QrReveal } from './QrReveal';
 
 const noop = () => {};
@@ -10,9 +10,11 @@ const URL_ = secretPageUrl({ origin: 'https://lastbrew.example', base: '/' });
 const text = (html: string) => html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ').trim();
 
 describe('the casing key', () => {
-  it('reads MORE COFFEE by default and exactly "Enough?" when asked', () => {
+  it('reads MORE COFFEE by default, and exactly "Enough?" and "Enough." for the two final steps', () => {
     expect(text(renderToString(createElement(MoreCoffeeKey, { shown: true, onPress: noop })))).toBe('MORE COFFEE');
-    expect(text(renderToString(createElement(MoreCoffeeKey, { shown: true, onPress: noop, label: 'Enough?' })))).toBe('Enough?');
+    expect(ENOUGH_LABELS).toEqual({ lastDrop: 'Enough?', secretBlend: 'Enough.' });
+    expect(text(renderToString(createElement(MoreCoffeeKey, { shown: true, onPress: noop, label: ENOUGH_LABELS.lastDrop })))).toBe('Enough?');
+    expect(text(renderToString(createElement(MoreCoffeeKey, { shown: true, onPress: noop, label: ENOUGH_LABELS.secretBlend })))).toBe('Enough.');
   });
 });
 

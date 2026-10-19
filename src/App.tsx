@@ -120,6 +120,7 @@ export function App() {
             brewRun={state.brewRun}
             record={state.solve}
             serving={state.serving}
+            drunk={state.progress.drunk.length}
             notice={state.notice}
             dispatch={dispatch}
           />

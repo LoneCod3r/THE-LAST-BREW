@@ -3,7 +3,7 @@
  * from the screens listed in its case; anything else returns the state as-is,
  * so invalid progression (e.g. brewing without a correct answer) is impossible.
  */
-import { PATH_BY_ID, isPathId, type PathId } from '../data/paths';
+import { PATHS, PATH_BY_ID, isPathId, type PathId } from '../data/paths';
 import { clampSugar } from '../data/machine';
 import { PUZZLES } from '../data/puzzles';
 import type { NoticeId } from '../data/rewards';
@@ -41,8 +41,10 @@ export interface SolveRecord {
 }
 
 /**
- * What the display shows after a coffee, one page per MORE COFFEE press. Once the
- * full set has been drunk, every coffee ends on a 'qr' page, which only ENOUGH opens.
+ * What the display shows after a coffee, one page per MORE COFFEE press. The coffee that
+ * completes the full set (the unlock) ends on a 'qr' page, which only ENOUGH opens; later
+ * coffees do not. On it the display goes quiet (the silent screen) and the keys read
+ * Enough? and Enough.
  */
 export type RewardPage = 'message' | 'ritual' | 'qr';
 
@@ -96,7 +98,7 @@ export type GameAction =
   | { type: 'DRINK_COMPLETE'; run: number }
   /** The MORE COFFEE key, pressed while the display showed `page`. */
   | { type: 'MORE_COFFEE'; page: number }
-  /** The same key, labelled Enough?, pressed while the display showed `page`; reveals the QR code. */
+  /** The same key, labelled Enough?, pressed while the display showed `page`; opens the 'qr' page. */
   | { type: 'ENOUGH'; page: number }
   | { type: 'REVEAL_SECRET' }
   | { type: 'OPEN_SECRET' }
@@ -135,10 +137,51 @@ function toFreshMachine(state: GameState): GameState {
   return { ...toArchive(state), sugar: 0, selection: null, notice: null };
 }
 
-/** The key reads Enough? instead of MORE COFFEE: the next page is the QR code. */
+/** The next page is the silent ('qr') page: MORE COFFEE dispatches ENOUGH to reach it. */
 export function offersEnough(state: GameState): boolean {
   const serving = state.serving;
   return state.screen === 'PUZZLE_SOLVED' && !!serving && !serving.unveiling && serving.pages[serving.page + 1] === 'qr';
+}
+
+/**
+ * What the casing keys do on the current page. Once the full set has been drunk, MORE
+ * COFFEE on the page before the 'qr' page dispatches ENOUGH to reach it; there, two keys
+ * stand together: Enough? (the screen opens the Last Drop in a new tab; no action) and
+ * Enough. (MORE_COFFEE: into the Secret Blend). The silent page, and so these two keys,
+ * comes once per session, after the coffee that completes the set.
+ */
+export type CasingKey = 'more' | 'toSilent' | 'both';
+
+export function casingKey(serving: Serving): CasingKey {
+  if (serving.pages[serving.page + 1] === 'qr') return 'toSilent';
+  if (serving.pages[serving.page] === 'qr') return 'both';
+  return 'more';
+}
+
+/**
+ * Whether every distinct coffee had already been drunk before the one being served. The coffee
+ * that completes the set is the only one whose pages end on the silent ('qr') page.
+ */
+export function setCompletedBefore(serving: Serving, distinctDrunk: number): boolean {
+  return distinctDrunk >= PATHS.length && !serving.pages.includes('qr');
+}
+
+/**
+ * The band under the screen once the cup is gone (`ready`): which key stands there and whether
+ * it shows. Whenever the silent page is on view, both Enough keys are. (The ? disc is never
+ * here: it stands only on the coffee-selection machine; see machineSelectProps.)
+ */
+export interface CasingControls {
+  keys: 'enough' | 'more';
+  keyShown: boolean;
+}
+
+export function casingControls(serving: Serving | null, ready: boolean): CasingControls {
+  const keyShown = ready && serving !== null && !serving.unveiling;
+  return {
+    keys: keyShown && casingKey(serving!) === 'both' ? 'enough' : 'more',
+    keyShown,
+  };
 }
 
 export function gameReducer(state: GameState, action: GameAction): GameState {
@@ -233,8 +276,9 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const drink = recordDrink(state.progress, state.solve.pathId);
       const pages: RewardPage[] = ['message'];
       if (drink.ritual) pages.push('ritual');
-      // Only once every puzzle has been solved and drunk; never before the full set.
-      if (drink.progress.finalUnlocked) pages.push('qr');
+      // The silent page follows only the coffee that completes the set (the unlock itself); later
+      // coffees end as usual, and the selection machine keeps the seal and the ? disc.
+      if (drink.final) pages.push('qr');
       return { ...state, progress: drink.progress, serving: { pages, page: 0, unveiling: false } };
     }
 
@@ -242,23 +286,24 @@ export function gameReducer(state: GameState, action: GameAction): GameState {
       const serving = state.serving;
       // The page token makes a double activation advance only once.
       if (state.screen !== 'PUZZLE_SOLVED' || !serving || serving.unveiling || action.page !== serving.page) return state;
-      // The QR code is never skipped: only ENOUGH moves on to it.
+      // The silent page is never skipped: only ENOUGH moves on to it.
       if (offersEnough(state)) return state;
       if (serving.page < serving.pages.length - 1) return { ...state, serving: { ...serving, page: serving.page + 1 } };
-      if (state.progress.finalUnlocked && !state.progress.finalSeen) return { ...state, serving: { ...serving, unveiling: true } };
+      // Enough. on the silent page plays the Secret Blend on the machine.
+      if (serving.pages[serving.page] === 'qr') return { ...state, serving: { ...serving, unveiling: true } };
       return toFreshMachine(state);
     }
 
     case 'ENOUGH': {
       const serving = state.serving;
-      // Same page token as MORE COFFEE: a double activation reveals the code once.
+      // Same page token as MORE COFFEE: a double activation opens the silent page once.
       if (!offersEnough(state) || !serving || action.page !== serving.page) return state;
       return { ...state, serving: { ...serving, page: serving.page + 1 } };
     }
 
     case 'REVEAL_SECRET':
       if (state.screen !== 'PUZZLE_SOLVED' || !state.serving?.unveiling) return state;
-      return { ...toFreshMachine(state), screen: 'SECRET_BLEND', secretFull: true, progress: markFinalSeen(state.progress) };
+      return { ...toFreshMachine(state), screen: 'SECRET_BLEND', secretFull: !state.progress.finalSeen, progress: markFinalSeen(state.progress) };
 
     case 'OPEN_SECRET':
       if (state.screen !== 'PATH_SELECTION' || !state.progress.finalUnlocked) return state;

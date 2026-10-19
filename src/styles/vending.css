@@ -472,7 +472,8 @@
 .casing__seal-disc {
   position: relative;
   display: block;
-  width: max(16px, 4.2cqw);
+  /* The same diameter as the ? disc (.casing__puzzle-disc) at every size. */
+  width: max(18px, 4.2cqw);
   aspect-ratio: 1;
   border-radius: 50%;
   background: radial-gradient(circle at 35% 30%, #2c2e2f, #121314 75%);
@@ -1250,15 +1251,112 @@
   }
 }
 
-/* ══ ENOUGH?: THE CODE ════════════════════════════════════════════════════ */
-/* The machine goes quiet: the photo dims and the display empties. */
+/* ══ THE SILENT SCREEN: ENOUGH? AND ENOUGH. ═══════════════════════════════ */
+/* The machine goes quiet: the photo dims and the display keeps a single line. */
 .vm.is-quiet .vm__photo {
   filter: saturate(0.4) contrast(1.05) brightness(0.42);
   transition: filter 1800ms ease-in-out;
 }
 
-.vmui__quiet {
-  display: none;
+/* After Enough?: the machine falls silent. A darker display, one quiet line, and the key as the only light. */
+.vm.is-quiet .vmui {
+  background: radial-gradient(ellipse at 50% 40%, #0c100e, #050606 78%);
+  transition: background 1800ms ease-in-out;
+}
+
+.vmui__msg--silent {
+  animation: msg-in 2400ms ease-out 600ms both;
+}
+
+.vmui__msg--silent .vmui__msg-title {
+  max-width: 78%;
+  padding-left: 0.3em;
+  font-family: var(--display);
+  font-size: max(2.7cqw, 8.5px);
+  font-weight: 600;
+  line-height: 1.6;
+  letter-spacing: 0.26em;
+  color: var(--fg-faint);
+  text-shadow: none;
+  text-wrap: balance;
+}
+
+/* Enough. stands beneath Enough?: one touch target's height plus a clear gap. */
+.more-key--below {
+  transform: translate(-50%, calc(-50% + max(44px, 7.4cqw) + max(6px, 1.4cqw)));
+}
+
+/* The Last Drop disc: the seal's twin, engraved with a question mark, at the other end of the band under the screen.
+   Only on the coffee-selection machine; never while brewing, on the messages or on the silent screen. */
+.casing__puzzle {
+  position: absolute;
+  z-index: 5;
+  display: grid;
+  place-items: center;
+  width: max(28px, 11cqw);
+  height: max(44px, 7.4cqw);
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  cursor: pointer;
+  transform: translate(-50%, -50%);
+  touch-action: manipulation;
+  -webkit-tap-highlight-color: transparent;
+}
+
+.casing__puzzle-disc {
+  display: grid;
+  place-items: center;
+  width: max(18px, 4.2cqw);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle at 35% 30%, #2c2e2f, #121314 75%);
+  box-shadow:
+    0 0 0 max(1px, 0.25cqw) rgba(170, 172, 170, 0.45),
+    0 max(1px, 0.3cqw) max(2px, 0.6cqw) rgba(0, 0, 0, 0.7);
+  font-family: var(--mono);
+  font-size: max(10px, 2.3cqw);
+  font-weight: 600;
+  line-height: 1;
+  color: var(--fg-dim);
+  text-shadow: 0 -1px 0 rgba(0, 0, 0, 0.85);
+  transition: filter 160ms ease-out;
+}
+
+.casing__puzzle:hover .casing__puzzle-disc {
+  filter: brightness(1.25);
+}
+
+.casing__puzzle:active .casing__puzzle-disc {
+  filter: brightness(0.9);
+}
+
+.casing__puzzle:focus-visible {
+  outline: none;
+}
+
+.casing__puzzle:focus-visible .casing__puzzle-disc {
+  outline: 2px solid var(--accent);
+  outline-offset: 3px;
+}
+
+/* The keys: a soft, cool light behind each cap, never a glow on it; pressing is unchanged. */
+.vm.is-quiet .more-key--casing::before {
+  content: '';
+  position: absolute;
+  inset: -40% -14%;
+  z-index: -1;
+  pointer-events: none;
+  background: radial-gradient(closest-side, rgba(216, 214, 208, 0.26), rgba(216, 214, 208, 0.08) 60%, transparent);
+  animation: msg-in 1800ms ease-out both;
+}
+
+.vm.is-quiet .more-key__cap {
+  color: var(--fg);
+  text-shadow:
+    0 -1px 0 rgba(0, 0, 0, 0.85),
+    0 0 0.8em rgba(216, 214, 208, 0.22);
 }
 
 /*
@@ -1356,8 +1454,13 @@
 
 /* Reduced motion: a plain fade, no blur, flicker or scale. */
 @media (prefers-reduced-motion: reduce) {
-  .vm.is-quiet .vm__photo {
+  .vm.is-quiet .vm__photo,
+  .vm.is-quiet .vmui,
+  .vmui__msg--silent,
+  .vm.is-quiet .more-key__cap,
+  .vm.is-quiet .more-key--casing::before {
     transition: none;
+    animation: none;
   }
   .qr-reveal {
     animation: qr-fade 400ms ease-out both;

@@ -10,13 +10,15 @@ interface CasingDetailsProps {
   disabled?: boolean;
   /** Present once the final reward is unlocked: reopens the Secret Blend. */
   onSecret?: () => void;
+  /** The ? disc at the right end of the band: opens the Last Drop. Only on the coffee-selection machine. */
+  onLastDrop?: () => void;
 }
 
 /**
  * Small parts on the casing that reward a curious visitor: the maker's badge on
  * the drip tray (five quick presses) and a stray bean on the hopper lid.
  */
-export function CasingDetails({ onEgg, disabled = false, onSecret }: CasingDetailsProps) {
+export function CasingDetails({ onEgg, disabled = false, onSecret, onLastDrop }: CasingDetailsProps) {
   const taps = useRef<TapRun | null>(null);
 
   const pressBadge = () => {
@@ -52,6 +54,20 @@ export function CasingDetails({ onEgg, disabled = false, onSecret }: CasingDetai
             <i />
             <i />
             <i />
+          </span>
+        </button>
+      )}
+
+      {onLastDrop && (
+        <button
+          type="button"
+          className="casing__puzzle"
+          style={photoPos(CASING.puzzle)}
+          aria-label="The last drop (opens in a new tab)"
+          onClick={onLastDrop}
+        >
+          <span className="casing__puzzle-disc" aria-hidden="true">
+            ?
           </span>
         </button>
       )}

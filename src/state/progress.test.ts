@@ -99,13 +99,16 @@ describe('progress events', () => {
 
   it('reports the ritual and the final reward exactly when they unlock', () => {
     let p = ['key', 'mind', 'void'].reduce((acc, id) => recordSolve(acc, id as 'key'), emptyProgress());
+    // A repeat counts as a coffee, never as a new distinct one: no ritual on the third drink.
     const a = recordDrink(p, 'key');
     const b = recordDrink(a.progress, 'key');
     const c = recordDrink(b.progress, 'mind');
-    expect([a.ritual, b.ritual, c.ritual]).toEqual([false, false, true]);
+    expect([a.ritual, b.ritual, c.ritual]).toEqual([false, false, false]);
     expect(c.final).toBe(false);
+    expect(c.progress.coffees).toBe(3);
+    // The third distinct coffee brings both at once.
     const d = recordDrink(c.progress, 'void');
-    expect(d).toMatchObject({ ritual: false, final: true });
+    expect(d).toMatchObject({ ritual: true, final: true });
     p = d.progress;
     expect(recordDrink(p, 'void')).toMatchObject({ ritual: false, final: false });
     expect(p.eggs).toEqual(['coffeeRitual']);

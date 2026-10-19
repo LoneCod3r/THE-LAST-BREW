@@ -18,7 +18,7 @@ export interface Progress {
   solved: PathId[];
   /** Puzzles whose coffee was also picked up; always a subset of solved. */
   drunk: PathId[];
-  /** Completed coffees of any kind (the Coffee Ritual counts these). */
+  /** Completed coffees of any kind, repeats included (a tally only; rewards count `drunk`). */
   coffees: number;
   eggs: EggId[];
   /** Every puzzle solved and its coffee drunk. */
@@ -62,7 +62,7 @@ export function parseProgress(raw: unknown): Progress {
   const drunk = inPathOrder(list(d.drunk, isPathId).filter((id) => solved.includes(id)));
   const stored = typeof d.coffees === 'number' && Number.isInteger(d.coffees) && d.coffees >= 0 ? d.coffees : 0;
   const coffees = Math.min(MAX_COFFEES, Math.max(stored, drunk.length));
-  const eggs = [...new Set(list(d.eggs, isEggId))].filter((e) => e !== 'coffeeRitual' || coffees >= COFFEE_RITUAL.threshold);
+  const eggs = [...new Set(list(d.eggs, isEggId))].filter((e) => e !== 'coffeeRitual' || drunk.length >= COFFEE_RITUAL.threshold);
   // The final reward is derived, never trusted: it exists only if its conditions do.
   const finalUnlocked = allDrunk(drunk);
   const finalSeen = finalUnlocked && d.finalSeen === true;
@@ -89,7 +89,8 @@ export function recordDrink(p: Progress, id: PathId): DrinkResult {
   if (!p.solved.includes(id)) return { progress: p, ritual: false, final: false };
   const drunk = p.drunk.includes(id) ? p.drunk : inPathOrder([...p.drunk, id]);
   const coffees = Math.min(MAX_COFFEES, p.coffees + 1);
-  const ritual = coffees >= COFFEE_RITUAL.threshold && !p.eggs.includes('coffeeRitual');
+  // Distinct coffees only: a repeat never brings REGULAR CUSTOMER closer.
+  const ritual = drunk.length >= COFFEE_RITUAL.threshold && !p.eggs.includes('coffeeRitual');
   const final = !p.finalUnlocked && allDrunk(drunk);
   return {
     progress: {

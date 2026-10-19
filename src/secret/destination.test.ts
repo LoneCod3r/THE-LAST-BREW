@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
-import { SECRET_PATH, secretPageUrl } from './destination';
+import { afterEach, describe, expect, it, vi } from 'vitest';
+import { FROM_GAME, SECRET_PATH, openLastDrop, openSecretPage, returnToGame, secretPageUrl } from './destination';
 
 describe('the QR destination', () => {
   it('is the secret page under the address the game is served from', () => {
@@ -38,6 +38,68 @@ describe('the QR destination', () => {
     const where = { origin: 'https://lastbrew.example', base: '/' };
     for (const publicUrl of ['', '   ', 'not a url', 'javascript:alert(1)', 'ftp://lastbrew.example/']) {
       expect(secretPageUrl({ ...where, publicUrl })).toBe('https://lastbrew.example/last-drop/');
+    }
+  });
+});
+
+describe('Enough? opens the Last Drop puzzle', () => {
+  it('opens the real secret page in a new tab, so the game session is kept', () => {
+    const calls: unknown[][] = [];
+    const href = secretPageUrl({ origin: 'https://lastbrew.example', base: '/' });
+    openSecretPage(href, (...args) => calls.push(args));
+    expect(calls).toEqual([['https://lastbrew.example/last-drop/', '_blank', 'noopener']]);
+  });
+
+  it("the machine's shared handler (Enough? and the ? disc) opens this game's Last Drop in a new tab, marked as the game's", () => {
+    const open = vi.fn();
+    vi.stubGlobal('window', { location: { origin: 'https://lastbrew.example' }, open });
+    openLastDrop();
+    expect(FROM_GAME).toBe('#from-game');
+    expect(open.mock.calls).toEqual([['https://lastbrew.example/last-drop/#from-game', '_blank', 'noopener']]);
+  });
+
+  afterEach(() => vi.unstubAllGlobals());
+});
+
+describe('Return on the Last Drop page', () => {
+  /** A stand-in for the Last Drop tab: its address hash, and whether the browser lets it close. */
+  function tab(hash: string, closable: boolean) {
+    const here = {
+      closed: false,
+      close: vi.fn(() => {
+        if (closable) here.closed = true;
+      }),
+      location: { hash, assign: vi.fn() },
+    };
+    return here;
+  }
+  const event = () => ({ preventDefault: vi.fn() });
+  const GAME = 'https://lastbrew.example/';
+
+  it('in a tab the game opened: closes it, back to the game tab, with no navigation, reload or new tab', () => {
+    const here = tab('#from-game', true);
+    const e = event();
+    returnToGame(e, GAME, here);
+    expect(e.preventDefault).toHaveBeenCalledTimes(1);
+    expect(here.close).toHaveBeenCalledTimes(1);
+    expect(here.location.assign).not.toHaveBeenCalled();
+  });
+
+  it('should the browser refuse to close it, the link opens the game instead', () => {
+    const here = tab('#from-game', false);
+    returnToGame(event(), GAME, here);
+    expect(here.close).toHaveBeenCalledTimes(1);
+    expect(here.location.assign.mock.calls).toEqual([[GAME]]);
+  });
+
+  it('reached any other way (typed or bookmarked): the link opens the game as before, and nothing is closed', () => {
+    for (const hash of ['', '#elsewhere']) {
+      const here = tab(hash, true);
+      const e = event();
+      returnToGame(e, GAME, here);
+      expect(e.preventDefault).not.toHaveBeenCalled();
+      expect(here.close).not.toHaveBeenCalled();
+      expect(here.location.assign).not.toHaveBeenCalled();
     }
   });
 });

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { CASING, CUP_ART, PHOTO, SCREEN, SCREEN_BUTTONS, SPOUT_Y, SUGAR_DISPLAY, armAngle, buttonTarget, clampSugar, type ScreenButtonId } from './machine';
+import { CASING, CUP_ART, OPENING_CX, PHOTO, SCREEN, SCREEN_BUTTONS, SPOUT_Y, SUGAR_DISPLAY, armAngle, buttonTarget, clampSugar, type ScreenButtonId } from './machine';
 
 const ids = Object.keys(SCREEN_BUTTONS) as ScreenButtonId[];
 
@@ -68,8 +68,40 @@ describe('machine geometry', () => {
     expect(key.x + key.w / 2).toBeLessThanOrEqual(405);
   });
 
+  it('the seal and the ? disc are centred on the band’s dark strip, clear of the screen keys', () => {
+    // The lowest row of screen keys (− / sugar / START) ends here.
+    const keysBottom = SCREEN.y * PHOTO.height + 0.92 * SCREEN.h * PHOTO.height;
+    for (const p of [CASING.seal, CASING.puzzle]) {
+      // The strip runs from the housing's edge (y 258) to the brew bay's lit rim (y 284): its centre.
+      expect(p.y).toBe((258 + 284) / 2);
+      // The visible disc (4.2cqw ≈ 20.5 photo px) stays on the strip.
+      const r = (4.2 / 100) * PHOTO.width / 2;
+      expect(p.y - r).toBeGreaterThanOrEqual(258);
+      expect(p.y + r).toBeLessThanOrEqual(284);
+      // At the smallest machine (0.47 css px per photo px) a 44px box is 93.6 photo px tall: still below the keys.
+      expect(p.y - 44 / 0.47 / 2).toBeGreaterThan(keysBottom);
+    }
+    // Everything else stays where it was.
+    expect(CASING.moreCoffee.y).toBe(284);
+    expect(CASING.badge).toEqual({ x: OPENING_CX, y: 573 });
+  });
+
+  it('the ? disc mirrors the Secret Blend seal: level with it, inset as far from the right as the seal from the left', () => {
+    const disc = CASING.puzzle;
+    const seal = CASING.seal;
+    // The same horizontal line (both are positioned from their point the same way).
+    expect(disc.y).toBe(seal.y);
+    // The band runs x 104–405: the seal sits 32 in from its left end, the disc as far from its right.
+    expect(405 - disc.x).toBe(seal.x - 104);
+    expect(disc.x).toBeGreaterThan(OPENING_CX);
+    // Its touch box (11cqw ≈ 53.6 photo px wide) stays inside the band, and far from the seal's (9cqw).
+    const half = (11 / 100) * PHOTO.width / 2;
+    expect(disc.x - half).toBeGreaterThan(seal.x + ((9 / 100) * PHOTO.width) / 2);
+    expect(disc.x + half).toBeLessThanOrEqual(405);
+  });
+
   it('the casing details stay on the photo', () => {
-    for (const p of [CASING.badge, CASING.bean, CASING.seal]) {
+    for (const p of [CASING.badge, CASING.bean, CASING.seal, CASING.puzzle]) {
       expect(p.x).toBeGreaterThan(0);
       expect(p.x).toBeLessThan(PHOTO.width);
       expect(p.y).toBeGreaterThan(0);

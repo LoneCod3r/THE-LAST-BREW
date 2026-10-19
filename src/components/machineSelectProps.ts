@@ -1,3 +1,4 @@
+import { openLastDrop } from '../secret/destination';
 import type { GameAction, GameState } from '../state/machine';
 import type { MachineSelectProps } from './MachineSelect';
 
@@ -17,5 +18,6 @@ export function machineSelectProps(state: GameState, dispatch: (action: GameActi
     onEgg: (egg) => dispatch({ type: 'FIND_EGG', egg }),
     onDismissNotice: (seq) => dispatch({ type: 'DISMISS_NOTICE', seq }),
     onSecret: state.progress.finalUnlocked ? () => dispatch({ type: 'OPEN_SECRET' }) : undefined,
+    onLastDrop: state.progress.finalUnlocked ? openLastDrop : undefined,
   };
 }

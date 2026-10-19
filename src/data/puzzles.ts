@@ -64,7 +64,7 @@ const firstLock: PuzzleDefinition = {
   input: {
     kind: 'choice',
     legend: 'SELECT SWITCH',
-    submitLabel: 'ENGAGE SWITCH',
+    submitLabel: 'SUBMIT ANSWER',
     options: [
       { value: 'A', label: 'A' },
       { value: 'B', label: 'B' },
