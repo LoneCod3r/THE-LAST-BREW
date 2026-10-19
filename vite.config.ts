@@ -1,11 +1,16 @@
 import { fileURLToPath } from 'node:url';
 import { defineConfig } from 'vitest/config';
 import react from '@vitejs/plugin-react';
+import { containerUnitFallback } from './src/styles/containerUnitFallback.ts';
 
 const page = (path: string) => fileURLToPath(new URL(path, import.meta.url));
 
 export default defineConfig({
   plugins: [react()],
+  css: {
+    // Older engines without cqw/cqh (e.g. Huawei Browser) get an @supports-not copy of each rule using them.
+    postcss: { plugins: [containerUnitFallback()] },
+  },
   build: {
     // Two pages: the game, and the secret page its QR code leads to (served at last-drop/).
     rolldownOptions: {
